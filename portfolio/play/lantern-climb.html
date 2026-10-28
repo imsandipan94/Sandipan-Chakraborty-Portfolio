@@ -1,0 +1,4276 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lantern Climb F</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Azeret+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one portrait stage centered on the page; canvas fills it, DOM overlays for HUD and cards. */
+:root {
+  --night: #17122a;      /* page and sky */
+  --dusk: #2a2147;       /* panels */
+  --stone: #3d3360;
+  --ink: #f4ead8;        /* text */
+  --dim: #a99cc4;        /* secondary text */
+  --ember: #ffb04a;      /* hero, accent */
+  --thorn: #ff6f61;
+  --spring: #58d6b5;
+  --star: #ffe27a;
+  --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --mono: "Azeret Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--night); color: var(--ink);
+  font-family: var(--mono); overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+#stage {
+  position: relative; height: 100%;
+  width: min(100%, calc(100vh * 0.6)); width: min(100%, calc(100dvh * 0.6));
+  margin: 0 auto; touch-action: none; overflow: hidden;
+  background: var(--night);
+}
+canvas { display: block; position: absolute; inset: 0; }
+
+.hud {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 2;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(23,18,42,.9), rgba(23,18,42,0));
+}
+.hud .lvl { flex: 1; min-width: 0; font-family: var(--display); font-size: 18px; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud .lvl small { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: .08em; margin-right: 6px; }
+.hud .clock { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ember); }
+.hud .falls { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.stars { display: inline-flex; gap: 2px; align-items: center; vertical-align: middle; }
+.stars svg { display: block; }
+.hud .stars { margin-top: 3px; justify-content: flex-end; }
+.star-on { fill: var(--star); }
+.star-off { fill: none; stroke: var(--dim); stroke-width: 1.6; opacity: .55; }
+.star-pop { animation: pop .35s cubic-bezier(.2,.9,.3,1.6); }
+@keyframes pop { from { transform: scale(1.8); } }
+.iconbtn {
+  pointer-events: auto; width: 36px; height: 36px; border-radius: 10px; flex: none;
+  border: 1px solid rgba(169,156,196,.3); background: rgba(42,33,71,.8); color: var(--ink);
+  font: 700 15px var(--mono); cursor: pointer; display: grid; place-items: center;
+}
+.iconbtn:focus-visible, .btn:focus-visible, .lv:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+
+.overlay {
+  position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; padding: 24px 20px; gap: 18px; text-align: center;
+}
+.title-screen { background: radial-gradient(120% 70% at 50% 30%, rgba(42,33,71,.55), rgba(23,18,42,.92) 70%); }
+.logo { font-family: var(--display); font-size: clamp(48px, 15vw, 72px); line-height: .9; color: var(--ink); text-wrap: balance; text-shadow: 0 0 28px rgba(255,176,74,.45); }
+.logo span { color: var(--ember); display: block; font-size: .5em; letter-spacing: .12em; margin-bottom: 6px; }
+.tag { color: var(--dim); font-size: 12px; line-height: 1.6; max-width: 30ch; }
+.rules { display: grid; gap: 8px; font-size: 12px; text-align: left; color: var(--ink); }
+.rules { grid-template-columns: max-content minmax(0, 1fr); column-gap: 12px; align-items: baseline; }
+.rules div { display: contents; }
+.rules b { font-family: var(--display); font-weight: 400; color: var(--ember); font-size: 14px; letter-spacing: .03em; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.picker {
+  position: absolute; inset: 0; z-index: 4; background: rgba(16,12,30,.97);
+  display: flex; flex-direction: column; touch-action: pan-y;
+}
+.picker header { display: flex; align-items: center; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid rgba(169,156,196,.15); }
+.picker header h2 { flex: 1; margin: 0; font: 400 24px var(--display); }
+.picker header span { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.chapters { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 16px 32px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.chapter { padding-top: 18px; display: grid; gap: 10px; }
+.chapter h3 { margin: 0; display: flex; justify-content: space-between; align-items: baseline; font: 400 17px var(--display); letter-spacing: .02em; }
+.chapter h3 small { font: 500 10px var(--mono); color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
+.variant { position: absolute; bottom: 14px; left: 0; right: 0; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); opacity: .7; }
+.progress { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.lv {
+  height: 56px; border-radius: 12px; min-width: 0; border: 1px solid rgba(169,156,196,.25);
+  background: var(--dusk); color: var(--ink); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font: 400 20px var(--display);
+}
+.lv small { font: 500 10px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+.lv .stars svg { width: 10px; height: 10px; }
+.lv.done { border-color: rgba(255,176,74,.6); box-shadow: inset 0 0 18px rgba(255,176,74,.18); }
+.lv.done small { color: var(--ember); }
+.lv:disabled { opacity: .35; cursor: default; }
+.btn {
+  font: 400 22px var(--display); letter-spacing: .03em; color: #2a1606; background: var(--ember);
+  border: 0; border-radius: 16px; padding: 14px 44px; cursor: pointer;
+  box-shadow: 0 6px 0 #b8651a, 0 0 30px rgba(255,176,74,.35);
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #b8651a; }
+.small-link { background: none; border: 0; color: var(--dim); font: 500 11px var(--mono); cursor: pointer; text-decoration: underline; padding: 6px; }
+
+.card {
+  position: absolute; left: 16px; right: 16px; bottom: 9%; z-index: 3;
+  background: rgba(42,33,71,.94); border: 1px solid rgba(255,176,74,.35); border-radius: 20px;
+  padding: 20px 18px 18px; text-align: center; display: grid; gap: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  animation: rise .35s cubic-bezier(.2,.9,.3,1.2) both;
+}
+.card h2 { margin: 0; font: 400 30px var(--display); color: var(--ember); text-wrap: balance; }
+.card .stats { display: flex; justify-content: center; gap: 22px; }
+.card .stat { display: grid; gap: 2px; }
+.card .stat b { font: 700 22px var(--mono); font-variant-numeric: tabular-nums; }
+.card .stat span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.card .bigstars { display: flex; justify-content: center; gap: 10px; }
+.card .bigstars svg { width: 44px; height: 44px; }
+.card .bigstars svg:has(.star-on) { filter: drop-shadow(0 0 8px rgba(255,226,122,.55)); }
+.card .bigstars svg:nth-child(2) { transform: translateY(-8px); }
+.card .starnote { font-size: 11px; color: var(--dim); }
+.cardbtns { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 4px; }
+.cbtn {
+  min-height: 48px; border-radius: 14px; border: 0; cursor: pointer; white-space: nowrap;
+  font: 400 19px var(--display); letter-spacing: .03em; color: #2a1606; background: var(--ember);
+  box-shadow: 0 4px 0 #b8651a;
+}
+.cbtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8651a; }
+.cbtn.ghost { background: transparent; color: var(--ink); border: 1.5px solid rgba(244,234,216,.4); box-shadow: none; }
+.cbtn.ghost:active { transform: translateY(1px); }
+.cbtn:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+.card .pb { font-size: 12px; color: var(--spring); min-height: 1em; }
+.card .next { font-size: 12px; color: var(--dim); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes rise { from { transform: translateY(30px); opacity: 0; } }
+@keyframes pulse { 50% { opacity: .35; } }
+
+.hint {
+  position: absolute; left: 50%; top: 64px; transform: translateX(-50%); z-index: 2;
+  background: rgba(23,18,42,.75); border: 1px solid rgba(169,156,196,.25); border-radius: 999px;
+  padding: 7px 14px; font-size: 12px; white-space: nowrap; pointer-events: none; transition: opacity .4s;
+}
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } .card .next { animation: none; } }
+</style>
+
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div class="hud" id="hud" hidden>
+    <button class="iconbtn" id="menuBtn" aria-label="Levels">≡</button>
+    <div class="lvl" id="lvlName"></div>
+    <div style="text-align:right">
+      <div class="clock" id="clock">0.00</div>
+      <div class="falls" id="falls"></div>
+      <div class="stars" id="hudStars" aria-label="Stars this run"></div>
+    </div>
+    <button class="iconbtn" id="muteBtn" aria-label="Sound on">♪</button>
+  </div>
+  <div class="hint" id="hint" hidden></div>
+
+  <div class="overlay title-screen" id="title">
+    <div class="logo"><span>WICK'S</span>Lantern Climb</div>
+    <div class="tag">A hundred short towers. Wick runs on his own. Light every lantern, grab every star.</div>
+    <div class="rules" id="rules"></div>
+    <button class="btn" id="playBtn">Play</button>
+    <div class="progress" id="progress"></div>
+    <button class="small-link" id="levelsBtn">All 100 levels</button>
+    <div class="variant" id="variantTag"></div>
+  </div>
+
+  <div class="picker" id="picker" hidden>
+    <header>
+      <h2>Levels</h2>
+      <span id="pickerCount"></span>
+      <button class="iconbtn" id="pickerClose" aria-label="Close">×</button>
+    </header>
+    <div class="chapters" id="chapters"></div>
+    <div style="text-align:center;padding:8px 0 14px"><button class="small-link" id="resetBtn">Reset progress</button></div>
+  </div>
+
+  <div class="card" id="card" hidden>
+    <h2 id="cardTitle">Lantern lit</h2>
+    <div class="bigstars" id="cStars"></div>
+    <div class="starnote" id="cStarNote"></div>
+    <div class="stats">
+      <div class="stat"><b id="cTime">0.00</b><span>seconds</span></div>
+      <div class="stat"><b id="cFalls">0</b><span>falls</span></div>
+      <div class="stat"><b id="cBest">–</b><span>best</span></div>
+    </div>
+    <div class="pb" id="cPb"></div>
+    <div class="cardbtns">
+      <button class="cbtn ghost" id="retryBtn" aria-label="Retry this level">↻ Retry</button>
+      <button class="cbtn" id="nextBtn">Next level ▸</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Shared physics core: runs in the browser and in the Node solver.
+// Units are tiles and seconds. y grows downward.
+const P = {
+  RUN: 4.4, G: 40, JUMP: 17.6, SLIDE: 3.0, BOUNCE: 23.5, MAXFALL: 17,
+  W: 0.66, H: 0.78, COYOTE: 0.12, BUFFER: 0.18, DT: 1 / 120, DOUBLE: 0.85
+};
+
+function parseLevel(def) {
+  const g = def.map.map(r => r.split(''));
+  const h = g.length, w = g[0].length;
+  let sx = 1, sy = h - 2, gx = 0, gy = 0;
+  const gems = [];
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const ch = g[r][c];
+    if (ch === 'S') { sx = c; sy = r; g[r][c] = '.'; }
+    if (ch === 'G') { gx = c; gy = r; }
+    if (ch === '*') { gems.push([c, r]); g[r][c] = '.'; }
+  }
+  return { name: def.name, hint: def.hint || '', g, w, h, sx, sy, gx, gy, gems };
+}
+
+function tileAt(L, c, r) {
+  if (c < 0 || c >= L.w || r >= L.h) return '#';
+  if (r < 0) return '.';
+  return L.g[r][c];
+}
+const isSolid = ch => ch === '#' || ch === 'B';
+
+function newHero(L) {
+  return {
+    x: L.sx + (1 - P.W) / 2, y: L.sy + 1 - P.H, vy: 0, dir: 1,
+    ground: true, wall: 0, coy: 0, buf: 0, t: 0, face: 1, air: 1, drop: -1
+  };
+}
+
+function overlapSolid(L, x, y) {
+  const c0 = Math.floor(x), c1 = Math.floor(x + P.W - 1e-9);
+  const r0 = Math.floor(y), r1 = Math.floor(y + P.H - 1e-9);
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++)
+    if (isSolid(tileAt(L, c, r))) return true;
+  return false;
+}
+
+// Advance one fixed step. input:
+//   0/false nothing   1/true jump (buffered; kicks off walls)   2 turn around
+//   3 face left       4 face right                              5 jump, or double jump in mid-air
+//   6 drop down through the wooden plank Wick is standing on
+// Returns an event string or null: 'jump' | 'walljump' | 'bounce' | 'land' | 'dead' | 'win'
+function step(s, L, input) {
+  const dt = P.DT;
+  let ev = null;
+  s.t += dt;
+  if (input === 2) { s.dir = -s.dir; s.wall = 0; ev = 'turn'; }
+  else if (input === 3 || input === 4) {
+    const d = input === 3 ? -1 : 1;
+    if (s.dir !== d) { s.dir = d; if (s.wall && s.wall !== d) s.wall = 0; ev = 'turn'; }
+  }
+  else if (input === 5 && !s.ground && s.coy <= 0 && !s.wall && s.air > 0) {
+    s.vy = -P.JUMP * P.DOUBLE; s.air = 0; s.buf = 0; ev = 'double';
+  }
+  else if (input === 6) {
+    // only when every tile under Wick's feet is wood (stone and springs can't be dropped through)
+    if (s.ground) {
+      const r = Math.floor(s.y + P.H + 0.01), c0 = Math.floor(s.x), c1 = Math.floor(s.x + P.W - 1e-9);
+      let wood = true; for (let c = c0; c <= c1; c++) if (tileAt(L, c, r) !== '-' && tileAt(L, c, r) !== '.') wood = false;
+      let any = false; for (let c = c0; c <= c1; c++) if (tileAt(L, c, r) === '-') any = true;
+      if (wood && any) { s.drop = r; s.ground = false; s.coy = 0; s.vy = 2; ev = 'drop'; }
+    }
+  }
+  else if (input) s.buf = P.BUFFER;
+  if (s.buf > 0) {
+    if (s.ground || s.coy > 0) {
+      s.vy = -P.JUMP; s.ground = false; s.coy = 0; s.buf = 0; ev = 'jump';
+    } else if (s.wall) {
+      s.vy = -P.JUMP; s.dir = -s.wall; s.wall = 0; s.buf = 0; ev = 'walljump';
+    }
+  }
+  s.buf -= dt; s.coy -= dt;
+
+  s.vy = Math.min(s.vy + P.G * dt, P.MAXFALL);
+  if (s.wall && s.vy > P.SLIDE) s.vy = P.SLIDE;
+
+  // Horizontal
+  const wasGround = s.ground;
+  s.x += s.dir * P.RUN * dt;
+  let hit = false;
+  if (overlapSolid(L, s.x, s.y)) {
+    hit = true;
+    if (s.dir > 0) s.x = Math.floor(s.x + P.W) - P.W - 1e-6;
+    else s.x = Math.floor(s.x) + 1 + 1e-6;
+  }
+  if (hit) {
+    if (wasGround) { s.dir = -s.dir; s.wall = 0; }
+    else s.wall = s.dir;
+  } else s.wall = 0;
+
+  // Vertical
+  const prevBottom = s.y + P.H;
+  s.y += s.vy * dt;
+  s.ground = false;
+  if (s.vy > 0) {
+    const r = Math.floor(s.y + P.H);
+    const c0 = Math.floor(s.x), c1 = Math.floor(s.x + P.W - 1e-9);
+    let land = false, bounce = false;
+    for (let c = c0; c <= c1; c++) {
+      const ch = tileAt(L, c, r);
+      if (isSolid(ch) || (ch === '-' && prevBottom <= r + 1e-6 && r !== s.drop)) land = true;
+      if (ch === 'B') bounce = true;
+    }
+    if (land) {
+      s.y = r - P.H;
+      if (bounce) { s.vy = -P.BOUNCE; ev = 'bounce'; s.wall = 0; }
+      else { if (!wasGround) ev = ev || 'land'; s.vy = 0; s.ground = true; s.wall = 0; }
+    }
+  } else if (s.vy < 0) {
+    const r = Math.floor(s.y);
+    const c0 = Math.floor(s.x), c1 = Math.floor(s.x + P.W - 1e-9);
+    for (let c = c0; c <= c1; c++) if (isSolid(tileAt(L, c, r))) {
+      s.y = r + 1; s.vy = 0; break;
+    }
+  }
+  if (wasGround && !s.ground && ev !== 'jump' && ev !== 'drop') s.coy = P.COYOTE;
+  if (s.drop >= 0 && (s.y > s.drop + 0.05 || s.ground)) s.drop = -1;
+  if (s.ground) s.coy = 0;
+  if (s.ground || s.wall) s.air = 1;
+  if (s.wall) s.face = -s.wall; else s.face = s.dir;
+
+  // Hazards and goal
+  const hx0 = s.x + 0.1, hx1 = s.x + P.W - 0.1, hy0 = s.y + 0.12, hy1 = s.y + P.H - 0.04;
+  const c0 = Math.floor(hx0), c1 = Math.floor(hx1), r0 = Math.floor(hy0), r1 = Math.floor(hy1);
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    const ch = tileAt(L, c, r);
+    if (ch === '^') {
+      // inset spike box
+      if (hx1 > c + 0.18 && hx0 < c + 0.82 && hy1 > r + 0.2 && hy0 < r + 0.8) return 'dead';
+    } else if (ch === 'G') return 'win';
+  }
+  return ev;
+}
+
+// Star pickup: the hero's box overlaps the star's cell (inset so it reads as touching the star).
+function starHit(s, c, r) {
+  return s.x + P.W > c + 0.2 && s.x < c + 0.8 && s.y + P.H > r + 0.15 && s.y < r + 0.85;
+}
+
+
+</script>
+<script>
+// Legend: # stone  - plank (jump up through)  ^ thorns  B spring  * star  S start  G lantern post (third star)
+// Stars: never on the starting floor, never two on one floor, at least 3 rows apart, never in a floor gap;
+// each pair is proven collectable by a jump-only player (build A), so every build can take all three.
+const LEVELS = [
+  { name: "First Hop", hint: "Swipe up to jump through the wood", map: [
+    '##########',
+    '#........#',
+    '#....G...#',
+    '#..-----.#',
+    '#...*....#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#......*.#',
+    '#-----...#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Ledges", hint: "Tap to turn around. Swipe up to jump.", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#.....*..#',
+    '#........#',
+    '####.....#',
+    '#.....*..#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Thorns", hint: "Swipe up to jump over the thorn", map: [
+    '##########',
+    '#........#',
+    '#......G.#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#...*....#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#.....*..#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#S..^....#',
+    '##########',
+  ]},
+  { name: "Chimney", hint: "Swipe up while touching a wall to kick off it", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '######...#',
+    '######*..#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#.......*#',
+    '#........#',
+    '#####----#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Springs", hint: "Springs throw you two floors up", map: [
+    '##########',
+    '#........#',
+    '#.....G..#',
+    '#--------#',
+    '#........#',
+    '#.^......#',
+    '#-----B--#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#......^.#',
+    '#-B------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^^...#',
+    '#--------#',
+    '#.......*#',
+    '#.^......#',
+    '#-----B--#',
+    '#........#',
+    '#....*...#',
+    '#--------#',
+    '#........#',
+    '#S..^....#',
+    '######B###',
+  ]},
+  { name: "Thorn Floors", hint: "Each jump climbs a floor. Tap to turn and line it up.", map: [
+    '##########',
+    '#........#',
+    '#...G....#',
+    '#--------#',
+    '#.......*#',
+    '#.^......#',
+    '#--------#',
+    '#........#',
+    '#.....^*.#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#......^.#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Switchback", hint: "", map: [
+    '##########',
+    '#........#',
+    '#......G.#',
+    '#...-----#',
+    '#........#',
+    '#..^.....#',
+    '#-----...#',
+    '#........#',
+    '#....*...#',
+    '######...#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######*..#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#........#',
+    '#---####B#',
+    '#........#',
+    '#...^....#',
+    '#-----...#',
+    '#........#',
+    '#S.....^.#',
+    '##########',
+  ]},
+  { name: "Needle Well", hint: "Thorns on the walls. Kick early.", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#....*####',
+    '#---.....#',
+    '#........#',
+    '#.*......#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#S......^#',
+    '##########',
+  ]},
+  { name: "Wren Belfry", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#.....^..#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#.*......#',
+    '#...-----#',
+    '#........#',
+    '#....*...#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Wick Steeple", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#.......*#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#*....^..#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Thistle Steps", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#...-----#',
+    '#........#',
+    '#....^...#',
+    '#-----...#',
+    '#........#',
+    '#.......*#',
+    '#....----#',
+    '#........#',
+    '#.......*#',
+    '#------..#',
+    '#........#',
+    '#...^..^.#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Copper Bell", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#.......*#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#.*^.....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Candle Spire", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#----....#',
+    '#..*.....#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.......*#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#--B-----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#......^.#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Smoke Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#####....#',
+    '#........#',
+    '#..*.....#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#.*......#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Wick Crown", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#--------#',
+    '#........#',
+    '#..^.^...#',
+    '#--------#',
+    '#.*......#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#......^.#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#-----B--#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#*.......#',
+    '#.^......#',
+    '#-----...#',
+    '#........#',
+    '#.....^..#',
+    '#..------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Pale Climb", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#..------#',
+    '#........#',
+    '#......^.#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#.......*#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#*.......#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Ember Hearth", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#......G.#',
+    '#-B------#',
+    '#..*.....#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#.......*#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.....^..#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Wren Lantern", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#...^....#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#*.......#',
+    '######...#',
+    '######...#',
+    '######*..#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Iron Steps", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#--------#',
+    '#.......*#',
+    '#........#',
+    '#-----B--#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#.......*#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--B-----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Velvet Ladder", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#....#####',
+    '#......*.#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#.....*..#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#-B------#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Pale Ledge", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#.....*..#',
+    '#........#',
+    '#------..#',
+    '#*.......#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#..^..^..#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.^......#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Owl Well", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#--------#',
+    '#........#',
+    '#.*......#',
+    '#--------#',
+    '#........#',
+    '#*.......#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#....^.^.#',
+    '#....#####',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Crow Perch", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#.^......#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#..*######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#..*^.^..#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Ash Shaft", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######..*#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.^....*.#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#..------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Soot Roost", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######...#',
+    '#.*......#',
+    '#........#',
+    '#....----#',
+    '#......*.#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Pitch Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#...^...*#',
+    '#..------#',
+    '#........#',
+    '#.^......#',
+    '#------..#',
+    '#........#',
+    '#*....^..#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Crow Nook", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#----....#',
+    '#........#',
+    '#....^...#',
+    '#..------#',
+    '#*.......#',
+    '#........#',
+    '#----....#',
+    '#......*.#',
+    '#......^.#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Hollow Shaft", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#----B---#',
+    '#........#',
+    '#.^.^....#',
+    '#--------#',
+    '#.....*..#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#....*...#',
+    '#------B-#',
+    '#........#',
+    '#..^...^.#',
+    '#-B------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Moth Roost", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#######..#',
+    '#######^.#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#.....*..#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######.*.#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#-B------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Hollow Nook", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.....*..#',
+    '#...-----#',
+    '#........#',
+    '#...*....#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Gloam Tower", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#..^.....#',
+    '#----....#',
+    '#........#',
+    '#......^.#',
+    '#...-----#',
+    '#*.......#',
+    '#........#',
+    '#--------#',
+    '#.*......#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Gloam Hearth", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#------B-#',
+    '#.......*#',
+    '#..^.....#',
+    '#####....#',
+    '#.....*..#',
+    '#...^..^.#',
+    '#...-----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Moth Rafters", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#..*.....#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#..^.^...#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#....*...#',
+    '####.....#',
+    '#........#',
+    '#......^.#',
+    '#.....####',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Slate Lantern", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.^......#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#.....*..#',
+    '#....^...#',
+    '#-----...#',
+    '#.......*#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#.^......#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Crow Chimney", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#.....####',
+    '#.......*#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.^..^...#',
+    '#--------#',
+    '#........#',
+    '#*.......#',
+    '#....----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Thistle Loft", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#-B------#',
+    '#........#',
+    '#..^.^...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#....*^..#',
+    '#--------#',
+    '#........#',
+    '#..^.*...#',
+    '######...#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Pitch Spire", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.....^..#',
+    '#....#####',
+    '#.......*#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#.*......#',
+    '#.^......#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Moth Ladder", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#..------#',
+    '#........#',
+    '#......^.#',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#..*.....#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#-----B--#',
+    '#........#',
+    '#....^...#',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#*.....^.#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Smoke Rise", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#--------#',
+    '#........#',
+    '#......^.#',
+    '#--------#',
+    '#........#',
+    '#..^.^...#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.^......#',
+    '#------..#',
+    '#........#',
+    '#.....^..#',
+    '#--------#',
+    '#.*......#',
+    '#...^....#',
+    '#--B-----#',
+    '#........#',
+    '#*....^..#',
+    '#...-----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Hollow Well", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#*.......#',
+    '#......^.#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#.....^..#',
+    '#..------#',
+    '#*.......#',
+    '#......^.#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Smoke Flue", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#.....*..#',
+    '#........#',
+    '#####....#',
+    '#.......*#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.^...^..#',
+    '#------..#',
+    '#........#',
+    '#.....^..#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Salt Loft", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#.....^..#',
+    '#-B------#',
+    '#........#',
+    '#...^....#',
+    '#####....#',
+    '#..*.....#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#.......*#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Amber Stair", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#..^.....#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.^...*^.#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#......*.#',
+    '#.....^..#',
+    '#------B-#',
+    '#........#',
+    '#...^....#',
+    '#..------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Thistle Well", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#......*.#',
+    '#........#',
+    '#--------#',
+    '#.....*..#',
+    '#......^.#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#-----B--#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Flint Shaft", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#------..#',
+    '#........#',
+    '#.....*^.#',
+    '#...-----#',
+    '#........#',
+    '#..*.....#',
+    '#-----B--#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Copper Garret", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '####.....#',
+    '#........#',
+    '#.....^..#',
+    '#...-----#',
+    '#.....*..#',
+    '#........#',
+    '#----....#',
+    '#.......*#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#......^.#',
+    '#..------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Soot Lantern", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#...-----#',
+    '#...*....#',
+    '#........#',
+    '#####....#',
+    '#*.......#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#...^....#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Slate Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#....----#',
+    '#........#',
+    '#.....*..#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#..^######',
+    '#...######',
+    '#...######',
+    '#...*....#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#...^....#',
+    '#--B-----#',
+    '#........#',
+    '#...^.^..#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Pale Garret", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#-----...#',
+    '#........#',
+    '#..^.^...#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#*.......#',
+    '######...#',
+    '######..^#',
+    '######...#',
+    '######.*.#',
+    '######...#',
+    '#........#',
+    '#.....^..#',
+    '#-----B--#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Halfway Summit", hint: "", map: [
+    '##########',
+    '#........#',
+    '#....G...#',
+    '#...###..#',
+    '#...*....#',
+    '#.^......#',
+    '#--B-^-B-#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#..^######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#........#',
+    '#####----#',
+    '#........#',
+    '#........#',
+    '#----..^-#',
+    '#........#',
+    '#.^......#',
+    '#--------#',
+    '#........#',
+    '#.....^*.#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Pale Stair", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '######...#',
+    '######...#',
+    '######..^#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#....*.^.#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#..*.....#',
+    '#.....####',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Ash Perch", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#.....*..#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#.......*#',
+    '#####....#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Copper Well", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#......G.#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#------B-#',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#*...^...#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#.......*#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Amber Nook", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#.....^.*#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#.....^..#',
+    '#..------#',
+    '#........#',
+    '#*^......#',
+    '#------..#',
+    '#........#',
+    '#......^.#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Dusk Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#----....#',
+    '#........#',
+    '#......^.#',
+    '#....----#',
+    '#........#',
+    '#...^....#',
+    '#-----...#',
+    '#........#',
+    '#...^....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#-----B--#',
+    '#.....*..#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#.....*..#',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Cinder Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#...*....#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#.....*..#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Wax Vault", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#....#####',
+    '#..*.....#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#..*.....#',
+    '#......^.#',
+    '#.....####',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Cinder Keep", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#.^.^*...#',
+    '#----....#',
+    '#........#',
+    '#.*......#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Thistle Tower", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#..------#',
+    '#........#',
+    '#...^....#',
+    '#-----...#',
+    '#........#',
+    '#...^....#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#---B----#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#.....^..#',
+    '#--------#',
+    '#.*......#',
+    '#.^.^....#',
+    '#--------#',
+    '#........#',
+    '#*....^..#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Wax Spire", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#--------#',
+    '#.......*#',
+    '#.^......#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#....^...#',
+    '#...-----#',
+    '#........#',
+    '#.......*#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#..^######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Candle Climb", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#.*......#',
+    '#........#',
+    '#....----#',
+    '#*.......#',
+    '#..^.....#',
+    '#####....#',
+    '#........#',
+    '#......^.#',
+    '#.....####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Velvet Bell", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#....*...#',
+    '#........#',
+    '####.....#',
+    '#....*...#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#....^...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Flint Ladder", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#......^*#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#*.......#',
+    '#.....^..#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Salt Roost", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#....^.^.#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.^.^....#',
+    '#--------#',
+    '#........#',
+    '#....^.^.#',
+    '#--------#',
+    '#........#',
+    '#*....^..#',
+    '#--------#',
+    '#........#',
+    '#.*......#',
+    '#..------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Wax Rafters", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#..------#',
+    '#........#',
+    '#..^...*.#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#*.......#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#...^....#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Flint Stair", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#....*...#',
+    '#........#',
+    '#-B------#',
+    '#.......*#',
+    '#.....^..#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#..^.^...#',
+    '#------B-#',
+    '#........#',
+    '#....^...#',
+    '#....----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Wick Bell", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#..^.....#',
+    '####.....#',
+    '#.....*..#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#.*......#',
+    '#.....####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Wren Keep", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#------B-#',
+    '#........#',
+    '#...*^...#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#.....*..#',
+    '#.....^..#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Pitch Flue", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#----B---#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#*.^.....#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#....----#',
+    '#........#',
+    '#..^.....#',
+    '#----....#',
+    '#........#',
+    '#.....^..#',
+    '#..------#',
+    '#.....*..#',
+    '#........#',
+    '#----B---#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Hollow Spire", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#######..#',
+    '#######..#',
+    '#######.^#',
+    '#######..#',
+    '#######..#',
+    '#....*...#',
+    '#.^......#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#------B-#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######...#',
+    '#......*.#',
+    '#......^.#',
+    '#--------#',
+    '#........#',
+    '#.^......#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Crow Ladder", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#...*....#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#....*...#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Gloam Stair", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '#------B-#',
+    '#........#',
+    '#..^..^..#',
+    '#------..#',
+    '#.......*#',
+    '#......^.#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#.*......#',
+    '#.^......#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######^.#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Crow Lantern", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#......G.#',
+    '#..#######',
+    '#^.#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#.^..^...#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.^..^...#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#..*^....#',
+    '#------..#',
+    '#........#',
+    '#.*....^.#',
+    '#...-----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Wax Ladder", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#--------#',
+    '#.......*#',
+    '#........#',
+    '#--------#',
+    '#.....*..#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#...^....#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Owl Chimney", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#....^.^.#',
+    '#--------#',
+    '#....*...#',
+    '#...^....#',
+    '#..------#',
+    '#..*.....#',
+    '#......^.#',
+    '#------B-#',
+    '#........#',
+    '#........#',
+    '#...######',
+    '#..^######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Owl Perch", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#....*...#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#*.......#',
+    '#....#####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Cinder Vault", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#..^....*#',
+    '#----....#',
+    '#........#',
+    '#....^*..#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#---B----#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######..^#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Night Roost", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#..G.....#',
+    '#----....#',
+    '#........#',
+    '#..*.....#',
+    '#.....####',
+    '#........#',
+    '#.*^.....#',
+    '####.....#',
+    '#........#',
+    '#......^.#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#........#',
+    '#......^.#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Moss Keep", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#...^*...#',
+    '#-----...#',
+    '#........#',
+    '#.....^..#',
+    '#..------#',
+    '#........#',
+    '#.*.^....#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#-----B--#',
+    '#........#',
+    '#......^.#',
+    '#....#####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Copper Chimney", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#......G.#',
+    '#....#####',
+    '#........#',
+    '#..^..^..#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######..^#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.^.*....#',
+    '####.....#',
+    '#........#',
+    '#*.......#',
+    '#.....####',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Cinder Chimney", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#......G.#',
+    '#...-----#',
+    '#........#',
+    '#....^...#',
+    '#..#######',
+    '#.^#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#........#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######^.#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#......*.#',
+    '#........#',
+    '#--------#',
+    '#......*.#',
+    '#....^.^.#',
+    '#....----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Tallow Attic", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#......G.#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#.....*..#',
+    '#..^...^.#',
+    '#--------#',
+    '#.......*#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Soot Garret", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#-----...#',
+    '#..*.....#',
+    '#........#',
+    '#..------#',
+    '#...*....#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#.....^..#',
+    '#....----#',
+    '#........#',
+    '#...^....#',
+    '#------..#',
+    '#........#',
+    '#......^.#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Slate Turret", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#####....#',
+    '#........#',
+    '#.^......#',
+    '#######..#',
+    '#######..#',
+    '#######^.#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...*....#',
+    '#--------#',
+    '#........#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#....*...#',
+    '#...^....#',
+    '#---B----#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Owl Nook", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#*.......#',
+    '#........#',
+    '#.....####',
+    '#*.......#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#.....^..#',
+    '#....#####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Ash Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#..^.^*..#',
+    '#--------#',
+    '#........#',
+    '#*.....^.#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#----B---#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Hollow Perch", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#...-----#',
+    '#*.......#',
+    '#..^.....#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#..^.....#',
+    '######...#',
+    '######...#',
+    '######*..#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Night Turret", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#...*....#',
+    '#........#',
+    '#.....####',
+    '#*.......#',
+    '#.^......#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#..^.....#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Salt Crown", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.*^.....#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#-----B--#',
+    '#........#',
+    '#........#',
+    '#----....#',
+    '#*.......#',
+    '#....^...#',
+    '#..------#',
+    '#........#',
+    '#..^..^..#',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#^.#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Iron Rise", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#----....#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#..^.....#',
+    '#------..#',
+    '#........#',
+    '#......^.#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#...*....#',
+    '#........#',
+    '#.....####',
+    '#..*.....#',
+    '#..^.....#',
+    '####.....#',
+    '#........#',
+    '#.....^..#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#------B-#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Iron Flue", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#*.......#',
+    '#.^.^....#',
+    '#--------#',
+    '#....*...#',
+    '#.....^..#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######^.#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#........#',
+    '#..------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Wick Landing", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#...^*...#',
+    '#----....#',
+    '#........#',
+    '#*..^....#',
+    '#..------#',
+    '#........#',
+    '#........#',
+    '#-----B--#',
+    '#........#',
+    '#........#',
+    '#------..#',
+    '#........#',
+    '#........#',
+    '######...#',
+    '######^..#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Hollow Steeple", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.......G#',
+    '#----B---#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#......^.#',
+    '#---B----#',
+    '#.......*#',
+    '#...^....#',
+    '######...#',
+    '######*..#',
+    '######^..#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#....^...#',
+    '#..#######',
+    '#^.#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Candle Loft", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '######...#',
+    '#........#',
+    '#.^......#',
+    '#####....#',
+    '#........#',
+    '#.....^..#',
+    '#--------#',
+    '#....*...#',
+    '#......^.#',
+    '#------B-#',
+    '#........#',
+    '#...^....#',
+    '#...-----#',
+    '#*.......#',
+    '#........#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#..^######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Slate Gallery", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.....G..#',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#..^.....#',
+    '#----....#',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#....^*..#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#....----#',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#.*......#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Dusk Climb", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '#-----...#',
+    '#........#',
+    '#.^...^..#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#######..#',
+    '#.*......#',
+    '#........#',
+    '#....#####',
+    '#........#',
+    '#.....^..#',
+    '#..#######',
+    '#.^#######',
+    '#..#######',
+    '#..#######',
+    '#..*.....#',
+    '#........#',
+    '#..#######',
+    '#..#######',
+    '#^.#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Amber Chimney", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#G.......#',
+    '#------..#',
+    '#......*.#',
+    '#......^.#',
+    '#..------#',
+    '#........#',
+    '#.....^..#',
+    '#--------#',
+    '#........#',
+    '#.*......#',
+    '#-B------#',
+    '#........#',
+    '#......^.#',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#..#######',
+    '#........#',
+    '#........#',
+    '#-----B--#',
+    '#........#',
+    '#.....^..#',
+    '#...######',
+    '#...######',
+    '#^..######',
+    '#...######',
+    '#...######',
+    '#...######',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Copper Stair", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#....G...#',
+    '#--------#',
+    '#.....*..#',
+    '#..^.....#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#-----...#',
+    '#........#',
+    '#..*.....#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '#####....#',
+    '#........#',
+    '#........#',
+    '#.....####',
+    '#........#',
+    '#....^...#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#S.......#',
+    '##########',
+  ]},
+  { name: "Pale Nook", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#...G....#',
+    '#-----...#',
+    '#........#',
+    '#........#',
+    '#...-----#',
+    '#........#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#........#',
+    '#....#####',
+    '#....*...#',
+    '#........#',
+    '####.....#',
+    '#........#',
+    '#......^*#',
+    '#.....####',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+  { name: "Moss Ladder", hint: "", map: [
+    '##########',
+    '#........#',
+    '#........#',
+    '#.G......#',
+    '####.....#',
+    '#*.......#',
+    '#.....^..#',
+    '#...-----#',
+    '#........#',
+    '#......*.#',
+    '#------..#',
+    '#........#',
+    '#.....^..#',
+    '#--------#',
+    '#........#',
+    '#...^....#',
+    '#--------#',
+    '#........#',
+    '#....^...#',
+    '#######..#',
+    '#######..#',
+    '#######^.#',
+    '#######..#',
+    '#######..#',
+    '#........#',
+    '#........#',
+    '#--------#',
+    '#........#',
+    '#.^......#',
+    '#-B------#',
+    '#........#',
+    '#.S......#',
+    '##########',
+  ]},
+];
+const CHANGED_V3 = [2,3,20,31,65,73,75,86,87,88,91,94,97,98,99];
+
+</script>
+<script>
+const VARIANT = 'F';
+(() => {
+const stage = document.getElementById('stage');
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const COL = {
+  sky0: '#100c1e', sky1: '#1a1430', brick: 'rgba(120,100,170,0.05)',
+  stone: '#4d4280', stoneHi: '#9483cf', stoneLo: '#332a5a', seam: 'rgba(23,18,42,0.45)',
+  plank: '#9a6a43', plankHi: '#c79262', plankLo: '#6b4529', nail: '#3b2616',
+  thorn: '#ff6f61', thornLo: '#b7423a', spring: '#58d6b5', springLo: '#2f8f78', coil: '#c9c2dd',
+  star: '#ffe27a', starLo: '#c9902a',
+  ember: '#ffb04a', emberHi: '#ffe1a3', emberLo: '#d9762a', eye: '#2a1606', post: '#5a4a7d', glass: '#ffd27a'
+};
+
+// ---------- persistence ----------
+let save = { best: {}, stars: {}, unlocked: 1, muted: false };
+const SAVE_KEY = VARIANT === 'B' ? 'lanternclimb.v2' : 'lanternclimb.v2.' + VARIANT;
+try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = Object.assign(save, s); } catch (e) {}
+// Levels whose layout changed: drop best times recorded on the old layouts.
+if ((save.lv || 0) < 3) { if (typeof CHANGED_V3 !== 'undefined') CHANGED_V3.forEach(i => { delete save.best[i]; }); save.lv = 3; }
+if (!save.stars) save.stars = {};
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+// ---------- audio ----------
+// save.sound: 2 = music and effects, 1 = effects only, 0 = silent
+if (save.sound === undefined) save.sound = save.muted ? 0 : 2;
+let AC = null, sfxBus = null, musicBus = null, musicOut = null;
+function audioOn() {
+  if (save.sound === 0) return;
+  if (!AC) {
+    try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    const master = AC.createGain(); master.gain.value = 0.9; master.connect(AC.destination);
+    sfxBus = AC.createGain(); sfxBus.connect(master);
+    musicOut = AC.createGain(); musicOut.gain.value = 0; musicOut.connect(master);
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200; lp.connect(musicOut);
+    musicBus = lp;
+  }
+  if (AC.state === 'suspended') AC.resume();
+  if (save.sound === 2) music.start();
+}
+function tone(f, d, type = 'square', vol = 0.06, slide = 0, delay = 0) {
+  if (save.sound === 0 || !AC) return;
+  const t = AC.currentTime + delay;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g).connect(sfxBus); o.start(t); o.stop(t + d + 0.02);
+}
+// one synth voice on a bus, with a soft attack so notes don't click
+function voice(bus, f, t, d, type, vol, attack = 0.01) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vol, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g).connect(bus); o.start(t); o.stop(t + d + 0.05);
+  return o;
+}
+let noiseBuf = null;
+function noise(bus, t, d, vol, hp = 6000) {
+  if (!noiseBuf) {
+    noiseBuf = AC.createBuffer(1, AC.sampleRate * 0.2, AC.sampleRate);
+    const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+  }
+  const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  src.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = hp;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  src.connect(f).connect(g).connect(bus); src.start(t); src.stop(t + d + 0.02);
+}
+const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+
+// Background theme: "Lantern Climb", A minor, 100 BPM, 8-bar loop played twice with two melodies.
+// Bass + plucked arpeggio + soft lead + light hats. Scheduled a little ahead of time.
+const music = (() => {
+  const BPM = 100, STEP = 60 / BPM / 2;           // eighth notes
+  const CHORDS = [ // root midi, chord tones (semitones)
+    [57, [0, 3, 7]], [53, [0, 4, 7]], [48, [0, 4, 7]], [55, [0, 4, 7]],
+    [57, [0, 3, 7]], [53, [0, 4, 7]], [50, [0, 3, 7]], [52, [0, 4, 7]]
+  ];
+  // melodies: one entry per eighth (8 per bar), midi or 0 for rest
+  const MEL_A = [
+    76,0,74,0,72,0,71,72,  69,0,0,0,72,0,74,0,  76,0,79,0,76,0,74,72,  74,0,0,0,71,0,0,0,
+    76,0,74,0,72,0,71,72,  69,0,0,0,72,0,77,0,  76,0,74,0,72,0,71,0,   68,0,0,0,71,0,0,0 ];
+  const MEL_B = [
+    81,0,0,79,76,0,0,0,    77,0,76,0,74,0,72,0,  72,0,74,0,76,0,79,0,  79,0,0,0,74,0,0,0,
+    81,0,0,79,76,0,74,0,   77,0,0,0,76,0,74,0,   74,0,72,0,71,0,69,0,  71,0,0,0,68,0,0,0 ];
+  const ARP = [0, 1, 2, 3, 2, 1, 2, 1];
+  let timer = null, step = 0, next = 0, on = false;
+  function schedule() {
+    while (next < AC.currentTime + 0.15) {
+      const bar = Math.floor(step / 8) % 8, beat8 = step % 8, half = Math.floor(step / 64) % 2;
+      const [root, tones] = CHORDS[bar];
+      const t = next;
+      // bass on beats 1 and 3, a passing fifth on the "and" of 4
+      if (beat8 === 0 || beat8 === 4) voice(musicBus, midi(root - 12), t, STEP * 3.6, 'triangle', 0.16, 0.005);
+      if (beat8 === 7) voice(musicBus, midi(root - 12 + 7), t, STEP * 0.9, 'triangle', 0.1, 0.005);
+      // plucked arpeggio
+      const k = ARP[beat8], n = k === 3 ? root + 12 : root + tones[k];
+      voice(musicBus, midi(n + 12), t, STEP * 1.6, 'sine', 0.05, 0.004);
+      // lead
+      const m = (half ? MEL_B : MEL_A)[step % 64];
+      if (m) { voice(musicBus, midi(m), t, STEP * 2.2, 'square', 0.022, 0.02); voice(musicBus, midi(m) * 1.004, t, STEP * 2.2, 'triangle', 0.03, 0.02); }
+      // hats on the off-beats, a soft kick on 1
+      if (beat8 % 2 === 1) noise(musicBus, t, 0.04, 0.025);
+      if (beat8 === 0) { const o = voice(musicBus, 110, t, 0.18, 'sine', 0.16, 0.002); o.frequency.exponentialRampToValueAtTime(45, t + 0.15); }
+      next += STEP; step++;
+    }
+  }
+  function level(v, ramp) { if (musicOut) { const g = musicOut.gain, t = AC.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v, t + ramp); } }
+  return {
+    start() { if (on || !AC) return; on = true; step = 0; next = AC.currentTime + 0.08; schedule(); timer = setInterval(schedule, 30); level(1, 1.2); },
+    stop() { if (!on) return; on = false; clearInterval(timer); timer = null; level(0, 0.2); },
+    duck(v = 0.25, ramp = 0.12) { if (on) level(v, ramp); },
+    restore(ramp = 0.8) { if (on) level(1, ramp); },
+    get playing() { return on; }
+  };
+})();
+
+// Stingers: a fanfare for lighting the lantern, a falling phrase for a fall
+const jingle = {
+  win() {
+    if (save.sound === 0 || !AC) return;
+    music.duck(0, 0.15);
+    const t = AC.currentTime + 0.05, b = sfxBus;
+    [[72, 0], [76, 0.11], [79, 0.22], [84, 0.33]].forEach(([n, o]) => {
+      voice(b, midi(n), t + o, 0.32, 'square', 0.05); voice(b, midi(n), t + o, 0.32, 'triangle', 0.08);
+    });
+    [72, 76, 79, 84, 88].forEach(n => voice(b, midi(n), t + 0.5, 1.5, 'triangle', 0.055, 0.02));
+    voice(b, midi(48), t + 0.5, 1.4, 'triangle', 0.16, 0.01);
+    [96, 100, 103, 108].forEach((n, i) => voice(b, midi(n), t + 0.62 + i * 0.07, 0.25, 'sine', 0.03));
+    noise(b, t + 0.5, 0.5, 0.03, 9000);
+  },
+  fail() {
+    if (save.sound === 0 || !AC) return;
+    music.duck(0.15, 0.08);
+    const t = AC.currentTime + 0.02, b = sfxBus;
+    [[64, 0], [63, 0.16], [62, 0.32]].forEach(([n, o]) => voice(b, midi(n), t + o, 0.2, 'square', 0.05, 0.01));
+    const o = voice(b, midi(61), t + 0.48, 0.55, 'square', 0.05, 0.01);
+    const lfo = AC.createOscillator(), lg = AC.createGain();
+    lfo.frequency.value = 7; lg.gain.value = 9; lfo.connect(lg).connect(o.frequency);
+    lfo.start(t + 0.48); lfo.stop(t + 1.05);
+    o.frequency.setValueAtTime(midi(61), t + 0.48); o.frequency.exponentialRampToValueAtTime(midi(55), t + 1.0);
+    voice(b, midi(37), t + 0.48, 0.5, 'triangle', 0.14, 0.005);
+    setTimeout(() => music.restore(0.6), 1100);
+  }
+};
+document.addEventListener('visibilitychange', () => {
+  if (!AC) return;
+  if (document.hidden) AC.suspend(); else if (save.sound > 0) AC.resume();
+});
+
+const sfx = {
+  jump: () => tone(330, 0.12, 'square', 0.05, 620),
+  kick: () => tone(440, 0.1, 'square', 0.05, 880),
+  bounce: () => tone(200, 0.25, 'triangle', 0.09, 900),
+  land: () => tone(120, 0.05, 'triangle', 0.05),
+  turn: () => tone(520, 0.04, 'triangle', 0.035),
+  double: () => tone(520, 0.14, 'square', 0.05, 1040),
+  drop: () => tone(300, 0.1, 'triangle', 0.05, 160),
+  star: () => { tone(988, 0.12, 'triangle', 0.07); tone(1319, 0.2, 'triangle', 0.06, 0, 0.07); },
+  dead: () => { tone(300, 0.3, 'sawtooth', 0.04, 60); jingle.fail(); },
+  win: () => jingle.win()
+};
+
+// ---------- sizing ----------
+let W = 0, H = 0, T = 0, DPR = 1, viewRows = 0, off = null;
+function resize() {
+  const r = stage.getBoundingClientRect();
+  W = r.width; H = r.height; DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  T = W / 10; viewRows = H / T;
+  if (L) bake();
+}
+window.addEventListener('resize', resize);
+
+// ---------- star icons ----------
+const STAR_PATH = 'M12 2.2l2.9 6.1 6.7.8-4.9 4.6 1.3 6.6L12 17l-6 3.3 1.3-6.6-4.9-4.6 6.7-.8z';
+function starSvg(on, size = 14, pop = false) {
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"${pop ? ' class="star-pop"' : ''}><path class="${on ? 'star-on' : 'star-off'}" d="${STAR_PATH}"/></svg>`;
+}
+function starRow(n, size, popIdx = -1) {
+  let h = ''; for (let k = 0; k < 3; k++) h += starSvg(k < n, size, k === popIdx); return h;
+}
+
+// ---------- game state ----------
+let li = 0, L = null, hero = null, state = 'title', falls = 0, acc = 0, inputQ = [];
+let got = [false, false], starFx = [], ringFx = [];
+let camY = 0, deadT = 0, wonT = 0, parts = [], springAnim = {}, squash = 1, lit = 0, hintT = 0, shake = 0;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function loadLevel(i, fresh) {
+  li = i; L = parseLevel(LEVELS[i]);
+  if (fresh) falls = 0;
+  hero = newHero(L); acc = 0; inputQ = []; parts = []; springAnim = {}; lit = 0;
+  got = [false, false]; starFx = []; drawHudStars();
+  state = 'ready'; hintT = 0;
+  bake();
+  camY = targetCam(true);
+  $('hud').hidden = false; $('card').hidden = true; $('title').hidden = true;
+  $('lvlName').innerHTML = `<small>${i + 1}/${LEVELS.length}</small>${L.name}`;
+  $('clock').textContent = '0.00';
+  $('falls').textContent = falls ? `${falls} ${falls === 1 ? 'fall' : 'falls'}` : (save.best[i] ? `best ${save.best[i].toFixed(2)}` : '');
+  const h = $('hint');
+  h.textContent = hintFor(i) || 'Touch to start';
+  h.hidden = false; h.style.opacity = 1;
+}
+
+function drawHudStars(pop = -1) {
+  const n = got.filter(Boolean).length;
+  $('hudStars').innerHTML = starRow(n, 14, pop);
+  $('hudStars').setAttribute('aria-label', `${n} of 2 tower stars this run`);
+}
+
+function targetCam() {
+  const max = L.h - viewRows;
+  if (max <= 0) return max;
+  const want = hero.y + P.H / 2 - viewRows * 0.55;
+  return Math.max(0, Math.min(max, want));
+}
+
+// ---------- baking static tiles ----------
+function isSupport(ch) { return ch === '#' || ch === 'B' || ch === '-'; }
+function bake() {
+  off = document.createElement('canvas');
+  off.width = Math.ceil(L.w * T * DPR); off.height = Math.ceil(L.h * T * DPR);
+  const o = off.getContext('2d'); o.scale(DPR, DPR);
+  for (let r = 0; r < L.h; r++) for (let c = 0; c < L.w; c++) {
+    const ch = L.g[r][c], x = c * T, y = r * T;
+    if (ch === '#') drawStone(o, c, r, x, y);
+    else if (ch === '-') drawPlank(o, c, r, x, y);
+    else if (ch === '^') drawThorn(o, c, r, x, y);
+  }
+}
+function drawStone(o, c, r, x, y) {
+  const s = (cc, rr) => tileAt(L, cc, rr) === '#';
+  o.fillStyle = COL.stone; o.fillRect(x, y, T + 0.5, T + 0.5);
+  // brick seams, offset every other row
+  o.fillStyle = COL.seam;
+  o.fillRect(x, y + T / 2 - 0.5, T, 1);
+  const off2 = (r % 2) ? T / 2 : 0;
+  o.fillRect(x + off2, y, 1, T / 2); o.fillRect(x + (off2 + T / 2) % T, y + T / 2, 1, T / 2);
+  if (!s(c, r - 1)) { o.fillStyle = COL.stoneHi; o.fillRect(x, y, T + 0.5, Math.max(2, T * 0.09)); }
+  if (!s(c, r + 1)) { o.fillStyle = COL.stoneLo; o.fillRect(x, y + T - T * 0.1, T + 0.5, T * 0.1); }
+  if (!s(c - 1, r)) { o.fillStyle = 'rgba(255,255,255,0.05)'; o.fillRect(x, y, 2, T); }
+  if (!s(c + 1, r)) { o.fillStyle = 'rgba(0,0,0,0.18)'; o.fillRect(x + T - 2, y, 2, T); }
+}
+function drawPlank(o, c, r, x, y) {
+  const h = T * 0.24;
+  o.fillStyle = COL.plankLo; o.fillRect(x, y + h * 0.55, T + 0.5, h * 0.6);
+  o.fillStyle = COL.plank; o.fillRect(x, y, T + 0.5, h);
+  o.fillStyle = COL.plankHi; o.fillRect(x, y, T + 0.5, Math.max(1.5, h * 0.22));
+  o.fillStyle = COL.nail;
+  o.fillRect(x + T * 0.12, y + h * 0.45, 2, 2); o.fillRect(x + T * 0.82, y + h * 0.45, 2, 2);
+  if (c % 2 === 0) { o.fillStyle = 'rgba(0,0,0,0.2)'; o.fillRect(x, y, 1, h); }
+}
+function drawThorn(o, c, r, x, y) {
+  const below = isSupport(tileAt(L, c, r + 1)), above = tileAt(L, c, r - 1) === '#';
+  const left = tileAt(L, c - 1, r) === '#', right = tileAt(L, c + 1, r) === '#';
+  let ang = 0; // pointing up
+  if (below) ang = 0; else if (left) ang = Math.PI / 2; else if (right) ang = -Math.PI / 2; else if (above) ang = Math.PI;
+  o.save(); o.translate(x + T / 2, y + T / 2); o.rotate(ang);
+  const n = 3, bw = T / n;
+  for (let i = 0; i < n; i++) {
+    const bx = -T / 2 + i * bw, tall = i === 1 ? 0.62 : 0.48;
+    o.beginPath(); o.moveTo(bx + 1, T / 2); o.lineTo(bx + bw / 2, T / 2 - T * tall); o.lineTo(bx + bw - 1, T / 2); o.closePath();
+    o.fillStyle = COL.thorn; o.fill();
+    o.beginPath(); o.moveTo(bx + bw / 2, T / 2 - T * tall); o.lineTo(bx + bw - 1, T / 2); o.lineTo(bx + bw / 2, T / 2); o.closePath();
+    o.fillStyle = COL.thornLo; o.fill();
+  }
+  o.restore();
+}
+
+// ---------- particles ----------
+function burst(x, y, n, col, spd, life, up = 0) {
+  if (reduceMotion) n = Math.ceil(n / 3);
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = spd * (0.4 + Math.random() * 0.6);
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - up, life, max: life, col, s: 0.06 + Math.random() * 0.08 });
+  }
+}
+
+// ---------- input ----------
+// Five control schemes for A/B testing; VARIANT is set per build.
+// Gestures: a swipe fires as soon as the finger has moved far enough in one direction;
+// a tap fires on release when the finger barely moved (variant A jumps on press instead).
+const SCHEMES = {
+  A: { tapOnPress: 'jump', label: 'One tap', summary: 'tap to jump',
+       rules: [['Tap', 'jump'], ['On a wall', 'tap to kick off it'], ['Walls', 'turn Wick around']] },
+  B: { tap: 'turn', up: 'jump', label: 'Tap turn, swipe jump', summary: 'tap to turn, swipe up to jump',
+       rules: [['Tap', 'turn around'], ['Swipe up', 'jump'], ['On a wall', 'swipe up to kick off it']] },
+  C: { tap: 'jump', side: true, label: 'Tap jump, swipe turn', summary: 'tap to jump, swipe left or right to turn',
+       rules: [['Tap', 'jump'], ['Swipe ← →', 'change direction'], ['On a wall', 'tap to kick off it']] },
+  D: { up: 'jump', side: true, label: 'All swipes', summary: 'swipe up to jump, swipe left or right to turn',
+       rules: [['Swipe up', 'jump'], ['Swipe ← →', 'change direction'], ['On a wall', 'swipe up to kick off it']] },
+  E: { tap: 'jump2', side: true, label: 'Double jump', summary: 'tap to jump, tap in mid-air to double jump, swipe to turn',
+       rules: [['Tap', 'jump'], ['Tap again', 'double jump in mid-air'], ['Swipe ← →', 'change direction'], ['On a wall', 'tap to kick off it']] },
+  F: { tap: 'jump2', up: 'jump2', down: 'drop', side: true, strict: true, chain: true, label: 'Full kit', summary: 'tap or swipe up to jump and double jump, swipe down to drop, swipe to turn',
+       rules: [['Tap or swipe ↑', 'jump'], ['Again in the air', 'double jump'], ['Swipe ↓', 'drop through wood'], ['Swipe flat ← →', 'change direction'], ['On a wall', 'tap to kick off it']] }
+};
+const SCHEME = SCHEMES[VARIANT] || SCHEMES.B;
+const JUMP_ACTION = SCHEME.tapOnPress || (SCHEME.tap && SCHEME.tap.startsWith('jump') ? SCHEME.tap : SCHEME.up);
+const TAP_JUMPS = !!(SCHEME.tapOnPress || (SCHEME.tap && SCHEME.tap.startsWith('jump')));
+const JUMP_VERB = SCHEME.up && TAP_JUMPS ? 'Tap or swipe up' : SCHEME.up ? 'Swipe up' : 'Tap';
+const TURN_VERB = SCHEME.tap === 'turn' ? 'Tap to turn around' : SCHEME.side ? 'Swipe left or right to turn' : '';
+const TUTORIAL = {
+  0: VARIANT === 'F' ? 'Jump up through the wood. Swipe down to drop back.' : `${JUMP_VERB} to jump up through the wood`,
+  1: VARIANT === 'A' ? 'Walls turn you around. Jump when it lines up.'
+    : VARIANT === 'E' || VARIANT === 'F' ? `${TURN_VERB}. Tap twice to double jump.` : `${TURN_VERB}. ${JUMP_VERB} to jump.`,
+  2: `${JUMP_VERB} to jump over the thorn`,
+  3: `${JUMP_VERB} while touching a wall to kick off it`,
+  5: VARIANT === 'A' ? 'Every jump climbs a floor. Pick your moment.' : 'Each jump climbs a floor. Turn to line it up.'
+};
+function hintFor(i) { return i in TUTORIAL ? TUTORIAL[i] : LEVELS[i].hint; }
+
+function wake() { audioOn(); if (AC && AC.state === 'suspended') AC.resume(); }
+function startRun() {
+  state = 'play'; hintT = 0;
+  $('hint').style.opacity = hintFor(li) ? 1 : 0;
+}
+const CODES = { jump: 1, turn: 2, left: 3, right: 4, jump2: 5, drop: 6 };
+function act(kind) {
+  if (!kind) return;
+  wake();
+  if (state === 'ready') startRun();
+  if (state !== 'play') return;
+  inputQ.push(CODES[kind]);
+}
+const gest = new Map();
+const SWIPE = () => Math.max(22, H * 0.035);
+stage.addEventListener('pointerdown', e => {
+  if (e.target.closest('button') || !$('title').hidden || !$('picker').hidden) return;
+  e.preventDefault(); wake();
+  if (state === 'won') return; // the card's buttons decide: retry or next
+  const starter = state === 'ready';
+  if (starter) startRun();
+  else if (SCHEME.tapOnPress) { act(SCHEME.tapOnPress); return; }
+  if (SCHEME.tapOnPress) return;
+  gest.set(e.pointerId, { x: e.clientX, y: e.clientY, px: e.clientX, py: e.clientY, t: performance.now(), fired: false, starter, last: null });
+  try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+});
+// Strict swipes (build F): only a near-horizontal stroke (within 30° of flat) turns Wick;
+// anything steeper, diagonals included, is a jump (up) or a drop (down). One continuous stroke
+// can chain moves: the anchor follows the finger, and a change of direction fires the new move.
+const H_CONE = Math.tan(30 * Math.PI / 180);
+function swipeKind(dx, dy) {
+  if (SCHEME.strict) return Math.abs(dy) <= Math.abs(dx) * H_CONE ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+  if (-dy > Math.abs(dx) * 1.1) return 'up';
+  if (Math.abs(dx) > Math.abs(dy) * 1.1) return dx < 0 ? 'left' : 'right';
+  if (dy > Math.abs(dx) * 1.1) return 'down';
+  return null;
+}
+function fireSwipe(kind) {
+  if (kind === 'up') act(SCHEME.up);
+  else if (kind === 'down') act(SCHEME.down);
+  else if (SCHEME.side) act(kind);
+}
+stage.addEventListener('pointermove', e => {
+  const g = gest.get(e.pointerId); if (!g || (g.fired && !SCHEME.chain)) return;
+  if (SCHEME.chain && g.last) {
+    // after a move has fired, the anchor slides along while the finger keeps going the same way,
+    // so a change of direction is measured from where the turn began
+    const sx = e.clientX - g.px, sy = e.clientY - g.py;
+    if (Math.hypot(sx, sy) > 0.5 && swipeKind(sx, sy) === g.last) { g.x = e.clientX; g.y = e.clientY; }
+  }
+  g.px = e.clientX; g.py = e.clientY;
+  const dx = e.clientX - g.x, dy = e.clientY - g.y;
+  if (Math.hypot(dx, dy) < SWIPE()) return;
+  const kind = swipeKind(dx, dy); if (!kind) return;
+  g.x = e.clientX; g.y = e.clientY;
+  if (SCHEME.chain && kind === g.last) return;
+  g.last = kind; g.fired = true; fireSwipe(kind);
+});
+function endGesture(e) {
+  const g = gest.get(e.pointerId); if (!g) return;
+  gest.delete(e.pointerId);
+  if (g.fired || g.starter) return;
+  const dx = e.clientX - g.x, dy = e.clientY - g.y;
+  if (Math.hypot(dx, dy) < 18 && performance.now() - g.t < 450) act(SCHEME.tap);
+}
+stage.addEventListener('pointerup', endGesture);
+stage.addEventListener('pointercancel', e => gest.delete(e.pointerId));
+window.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  const k = e.key;
+  if (!$('title').hidden) { if (k === 'Enter' || k === ' ') { e.preventDefault(); $('playBtn').click(); } return; }
+  if (k === 'Escape') { showTitle(); return; }
+  if (!$('picker').hidden) return;
+  if (e.target.closest && e.target.closest('button') && e.target.offsetParent && (k === ' ' || k === 'Enter')) return;
+  if (state === 'won') {
+    if (wonT < 0.7) return;
+    if (['r', 'R'].includes(k)) { e.preventDefault(); retry(); }
+    else if ([' ', 'Enter', 'ArrowUp'].includes(k)) { e.preventDefault(); next(); }
+    return;
+  }
+  const turns = SCHEME.tap === 'turn' || SCHEME.side;
+  if ([' ', 'ArrowUp', 'w', 'W'].includes(k)) { e.preventDefault(); act(JUMP_ACTION); }
+  else if (SCHEME.down && ['ArrowDown', 's', 'S'].includes(k)) { e.preventDefault(); act(SCHEME.down); }
+  else if (turns && ['ArrowDown', 's', 'S', 'x', 'X', 'Shift'].includes(k)) { e.preventDefault(); act('turn'); }
+  else if (turns && ['ArrowLeft', 'a', 'A'].includes(k)) { e.preventDefault(); act('left'); }
+  else if (turns && ['ArrowRight', 'd', 'D'].includes(k)) { e.preventDefault(); act('right'); }
+});
+
+function retry() { if (state === 'won') { wake(); loadLevel(li, true); } }
+$('retryBtn').onclick = retry;
+$('nextBtn').onclick = () => { if (state === 'won') { wake(); next(); } };
+function next() {
+  if (li + 1 < LEVELS.length) loadLevel(li + 1, true);
+  else showTitle(true);
+}
+
+// ---------- events from physics ----------
+function handle(ev) {
+  if (!ev) return;
+  const cx = hero.x + P.W / 2, by = hero.y + P.H;
+  if (ev === 'turn') { sfx.turn(); squash = 0.9; return; }
+  if (ev === 'drop') { sfx.drop(); squash = 1.15; burst(hero.x + P.W / 2, hero.y + P.H, 6, COL.plankHi, 1.5, 0.3); return; }
+  if (ev === 'double') {
+    sfx.double(); squash = 1.35;
+    burst(hero.x + P.W / 2, hero.y + P.H, 12, COL.emberHi, 2.5, 0.4);
+    ringFx.push({ x: hero.x + P.W / 2, y: hero.y + P.H, t: 0 });
+    return;
+  }
+  if (ev === 'jump') { sfx.jump(); squash = 1.3; burst(cx, by, 6, '#cbbbe6', 2, 0.35); }
+  else if (ev === 'walljump') {
+    sfx.kick(); squash = 1.3;
+    const wx = hero.dir > 0 ? hero.x : hero.x + P.W;
+    burst(wx, hero.y + P.H / 2, 8, COL.emberHi, 3, 0.35);
+  }
+  else if (ev === 'bounce') {
+    sfx.bounce(); squash = 1.45;
+    const r = Math.floor(by + 0.01);
+    for (let c = Math.floor(hero.x); c <= Math.floor(hero.x + P.W - 1e-9); c++)
+      if (tileAt(L, c, r) === 'B') springAnim[c + ',' + r] = 1;
+    burst(cx, by, 10, COL.spring, 3, 0.4);
+  }
+  else if (ev === 'land') { sfx.land(); squash = 0.72; burst(cx, by, 4, '#cbbbe6', 1.5, 0.25); }
+  else if (ev === 'dead') {
+    sfx.dead(); state = 'dead'; deadT = 0; falls++; shake = reduceMotion ? 0 : 0.25;
+    burst(cx, hero.y + P.H / 2, 26, COL.ember, 6, 0.7); burst(cx, hero.y + P.H / 2, 10, COL.thorn, 4, 0.5);
+  }
+  else if (ev === 'win') {
+    sfx.win(); state = 'won'; wonT = 0;
+    burst(L.gx + 0.5, L.gy + 0.35, 30, COL.glass, 4, 0.9, 1);
+    const t = hero.t, prev = save.best[li];
+    const pb = !prev || t < prev;
+    if (pb) save.best[li] = t;
+    const earned = 1 + got.filter(Boolean).length, prevStars = save.stars[li] || 0;
+    if (earned > prevStars) save.stars[li] = earned;
+    runStars = earned; newStarBest = earned > prevStars && prevStars > 0;
+    save.unlocked = Math.max(save.unlocked, Math.min(LEVELS.length, li + 2));
+    persist();
+    setTimeout(() => showCard(t, prev, pb), 550);
+  }
+}
+
+let runStars = 0, newStarBest = false;
+function collectStars() {
+  L.gems.forEach(([c, r], k) => {
+    if (got[k] || !starHit(hero, c, r)) return;
+    got[k] = true; sfx.star();
+    burst(c + 0.5, r + 0.5, 18, COL.star, 4, 0.6, 0.5);
+    starFx.push({ c, r, t: 0 });
+    drawHudStars(got.filter(Boolean).length - 1);
+  });
+}
+function showCard(t, prev, pb) {
+  if (state !== 'won') return;
+  $('cStars').innerHTML = starRow(runStars, 44);
+  $('cStars').setAttribute('aria-label', `${runStars} of 3 stars`);
+  const bestStars = save.stars[li] || runStars;
+  $('cStarNote').textContent = runStars === 3 ? 'All three stars' : newStarBest ? `New star record: ${runStars} of 3` : bestStars > runStars ? `Your best here: ${bestStars} of 3` : `${3 - runStars} star${3 - runStars > 1 ? 's' : ''} still hidden in this tower`;
+  const last = li === LEVELS.length - 1;
+  $('cardTitle').textContent = last ? 'Every lantern lit' : 'Lantern lit';
+  $('cTime').textContent = t.toFixed(2);
+  $('cFalls').textContent = falls;
+  $('cBest').textContent = save.best[li].toFixed(2);
+  $('cPb').textContent = pb ? (prev ? `New best, ${(prev - t).toFixed(2)}s faster` : 'First clear') : '';
+  if (last) {
+    const all = LEVELS.every((_, i) => save.best[i]);
+    const sum = LEVELS.reduce((a, _, i) => a + (save.best[i] || 0), 0);
+    $('cPb').textContent = all ? `All best times together: ${sum.toFixed(2)}s` : $('cPb').textContent;
+  }
+  $('nextBtn').textContent = last ? 'Level list ▸' : 'Next level ▸';
+  $('card').hidden = false;
+}
+
+// ---------- title ----------
+function showTitle() {
+  state = 'title';
+  $('title').hidden = false; $('hud').hidden = true; $('card').hidden = true; $('hint').hidden = true;
+  $('picker').hidden = true;
+  const lit = Object.keys(save.best).length;
+  const stars = Object.values(save.stars).reduce((a, b) => a + b, 0);
+  $('progress').textContent = lit ? `${lit} of ${LEVELS.length} lanterns lit · ${stars} of ${LEVELS.length * 3} stars` : '';
+  const nextIdx = Math.min(save.unlocked - 1, LEVELS.length - 1);
+  $('playBtn').textContent = save.unlocked > 1 ? `Play ${nextIdx + 1}` : 'Play';
+  $('playBtn').onclick = () => { audioOn(); loadLevel(nextIdx, true); };
+  // a looping demo level behind the title
+  if (!L) { L = parseLevel(LEVELS[0]); hero = newHero(L); bake(); camY = targetCam(true); }
+}
+$('menuBtn').onclick = () => showTitle();
+$('resetBtn').onclick = () => { save.best = {}; save.stars = {}; save.unlocked = 1; persist(); showTitle(); };
+const CHAPTERS = ['Cellar', 'Stairwell', 'Gallery', 'Bell Loft', 'Clockworks', 'Flues', 'Rafters', 'Needle Spire', 'Storm Crown', 'Lantern Peak'];
+function showPicker() {
+  const box = $('chapters'); box.innerHTML = '';
+  for (let ch = 0; ch * 10 < LEVELS.length; ch++) {
+    const sec = document.createElement('section'); sec.className = 'chapter';
+    let chStars = 0; for (let k = ch * 10; k < Math.min(LEVELS.length, ch * 10 + 10); k++) chStars += save.stars[k] || 0;
+    sec.innerHTML = `<h3>${CHAPTERS[ch] || 'Tower ' + (ch + 1)}<small>${ch * 10 + 1}–${Math.min(LEVELS.length, ch * 10 + 10)} · ${chStars}/30 stars</small></h3>`;
+    const g = document.createElement('div'); g.className = 'grid';
+    for (let i = ch * 10; i < Math.min(LEVELS.length, ch * 10 + 10); i++) {
+      const b = document.createElement('button');
+      b.className = 'lv' + (save.best[i] ? ' done' : '');
+      b.disabled = i >= save.unlocked;
+      b.setAttribute('aria-label', `Level ${i + 1}, ${LEVELS[i].name}`);
+      b.title = LEVELS[i].name;
+      b.innerHTML = save.best[i] ? `${i + 1}<span class="stars">${starRow(save.stars[i] || 1, 10)}</span>` : `${i + 1}<small>${i < save.unlocked ? 'new' : '·'}</small>`;
+      if (save.best[i]) b.setAttribute('aria-label', `Level ${i + 1}, ${LEVELS[i].name}, ${save.stars[i] || 1} of 3 stars, best ${save.best[i].toFixed(2)} seconds`);
+      b.onclick = () => { audioOn(); loadLevel(i, true); $('picker').hidden = true; };
+      g.appendChild(b);
+    }
+    sec.appendChild(g); box.appendChild(sec);
+  }
+  $('pickerCount').textContent = `${Object.values(save.stars).reduce((a, b) => a + b, 0)}/${LEVELS.length * 3} stars`;
+  $('picker').hidden = false;
+  const cur = box.querySelectorAll('.chapter')[Math.floor(Math.min(save.unlocked - 1, LEVELS.length - 1) / 10)];
+  if (cur) box.scrollTop = cur.offsetTop - box.offsetTop - 4;
+}
+$('levelsBtn').onclick = showPicker;
+$('pickerClose').onclick = () => { $('picker').hidden = true; };
+function setMute() {
+  $('muteBtn').textContent = ['×', '♪', '♫'][save.sound];
+  $('muteBtn').setAttribute('aria-label', ['Sound off', 'Effects only, music off', 'Music and effects on'][save.sound]);
+  $('muteBtn').title = ['Sound off', 'Music off', 'Music on'][save.sound];
+}
+$('muteBtn').onclick = () => {
+  save.sound = (save.sound + 2) % 3; persist(); setMute();   // 2 → 1 → 0 → 2
+  if (save.sound === 2) audioOn();
+  else { music.stop(); if (save.sound === 0 && AC) AC.suspend(); }
+  if (save.sound === 1) audioOn();
+};
+
+// ---------- loop ----------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (state === 'play') {
+    acc += dt;
+    while (acc >= P.DT && state === 'play') {
+      const ev = step(hero, L, inputQ.length ? inputQ.shift() : 0);
+      acc -= P.DT;
+      if (ev !== 'dead') collectStars();
+      handle(ev);
+      if (state === 'play' && hero.wall && hero.vy > 0 && Math.random() < 0.15) {
+        const wx = hero.wall > 0 ? hero.x + P.W : hero.x;
+        parts.push({ x: wx, y: hero.y + P.H * 0.8, vx: -hero.wall * 0.5, vy: -0.5, life: 0.3, max: 0.3, col: COL.emberHi, s: 0.05 });
+      }
+    }
+    $('clock').textContent = hero.t.toFixed(2);
+    hintT += dt;
+    if (hintT > 2.5) $('hint').style.opacity = 0;
+  } else if (state === 'dead') {
+    deadT += dt;
+    if (deadT > 0.65) {
+      hero = newHero(L); acc = 0; state = 'ready'; lit = 0; inputQ = [];
+      got = [false, false]; starFx = []; drawHudStars();
+      $('falls').textContent = `${falls} ${falls === 1 ? 'fall' : 'falls'}`;
+      $('clock').textContent = '0.00';
+      const h = $('hint'); h.textContent = 'Touch to go again'; h.style.opacity = 1;
+    }
+  } else if (state === 'won') { wonT += dt; lit = Math.min(1, lit + dt * 3); }
+  else if (state === 'title') { titleDemo(dt); }
+
+  for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.life -= dt; }
+  parts = parts.filter(p => p.life > 0);
+  for (const f of starFx) f.t += dt; starFx = starFx.filter(f => f.t < 0.5);
+  for (const f of ringFx) f.t += dt; ringFx = ringFx.filter(f => f.t < 0.35);
+  for (const k in springAnim) { springAnim[k] -= dt * 4; if (springAnim[k] <= 0) delete springAnim[k]; }
+  squash += (1 - squash) * Math.min(1, dt * 12);
+  shake = Math.max(0, shake - dt);
+  if (L && hero) camY += (targetCam() - camY) * Math.min(1, dt * 6);
+  draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+
+// title background: the first tower slowly drifting
+let demoT = 0;
+function titleDemo(dt) { demoT += dt; }
+
+// ---------- drawing ----------
+function draw(time) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, COL.sky1); g.addColorStop(1, COL.sky0);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (!L) return;
+
+  let cy = camY;
+  if (state === 'title') cy = Math.max(Math.min(0, L.h - viewRows), (L.h - viewRows) * (0.5 + 0.5 * Math.sin(demoT * 0.25)));
+  const sx = shake > 0 ? (Math.random() - 0.5) * T * 0.15 * (shake / 0.25) : 0;
+
+  // far wall bricks (parallax)
+  ctx.fillStyle = COL.brick;
+  const bh = T * 0.55, bw = T * 1.1, py = -(cy * T * 0.4) % (bh * 2);
+  for (let y = py - bh * 2; y < H; y += bh) {
+    const row = Math.round((y - py) / bh);
+    for (let x = (row % 2 ? -bw / 2 : 0); x < W; x += bw) ctx.fillRect(x + 2, y + 2, bw - 4, bh - 4);
+  }
+
+  ctx.save();
+  ctx.translate(sx, -cy * T);
+  ctx.drawImage(off, 0, 0, L.w * T, L.h * T);
+
+  // springs
+  for (let r = 0; r < L.h; r++) for (let c = 0; c < L.w; c++) if (L.g[r][c] === 'B') drawSpring(c, r, springAnim[c + ',' + r] || 0);
+  drawLantern(time);
+  // stars: two in the tower, one above the lantern
+  L.gems.forEach(([c, r], k) => { if (!got[k]) drawStar(c + 0.5, r + 0.5, 0.36, time + k * 1.3, 1); });
+  for (const f of starFx) drawStar(f.c + 0.5, f.r + 0.5 - f.t * 1.2, 0.36 * (1 + f.t * 1.5), time, 1 - f.t / 0.5);
+  if (state !== 'won' || lit < 1) drawStar(L.gx + 0.5, L.gy - 0.45, 0.3, time + 0.7, state === 'won' ? 1 - lit : 0.9);
+
+  // hero
+  if (state !== 'dead' || deadT < 0.02) drawHero(time);
+
+  for (const f of ringFx) {
+    ctx.globalAlpha = 1 - f.t / 0.35; ctx.strokeStyle = COL.emberHi; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(f.x * T, f.y * T, T * (0.3 + f.t * 2.2), T * (0.1 + f.t * 0.6), 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  for (const p of parts) {
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.col;
+    ctx.fillRect((p.x - p.s / 2) * T, (p.y - p.s / 2) * T, p.s * T, p.s * T);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // darkness with Wick's light
+  const hx = (hero.x + P.W / 2) * T + sx, hy = (hero.y + P.H / 2 - cy) * T;
+  const dark = ctx.createRadialGradient(hx, hy, T * 1.2, hx, hy, T * 7.5);
+  dark.addColorStop(0, 'rgba(10,6,22,0)'); dark.addColorStop(1, `rgba(10,6,22,${0.45 - lit * 0.25})`);
+  ctx.fillStyle = dark; ctx.fillRect(0, 0, W, H);
+  // lantern light cuts through darkness
+  const lx = (L.gx + 0.5) * T, ly = (L.gy + 0.3 - cy) * T;
+  const lg = ctx.createRadialGradient(lx, ly, 0, lx, ly, T * (1.6 + lit * 4));
+  lg.addColorStop(0, `rgba(255,210,122,${0.22 + lit * 0.3})`); lg.addColorStop(1, 'rgba(255,210,122,0)');
+  ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'source-over';
+
+  // lantern off-screen marker
+  if (state !== 'title' && ly < 56) {
+    const a = 0.5 + 0.3 * Math.sin(time * 4);
+    ctx.fillStyle = `rgba(255,210,122,${a})`;
+    ctx.beginPath(); ctx.moveTo(lx, 62); ctx.lineTo(lx - 7, 72); ctx.lineTo(lx + 7, 72); ctx.closePath(); ctx.fill();
+  }
+
+  // ready prompt near Wick
+  if (state === 'ready') {
+    const a = 0.55 + 0.45 * Math.sin(time * 5);
+    ctx.font = `400 ${Math.round(T * 0.42)}px "Lilita One", sans-serif`;
+    ctx.textAlign = 'center'; ctx.fillStyle = `rgba(244,234,216,${a})`;
+    ctx.fillText('GO', hx, hy - T * 0.9);
+  }
+}
+
+function drawStar(cx, cy, rad, time, alpha) {
+  if (alpha <= 0) return;
+  const bob = reduceMotion ? 0 : Math.sin(time * 2.4) * 0.06;
+  const x = cx * T, y = (cy + bob) * T, R = rad * T;
+  ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  const gl = ctx.createRadialGradient(x, y, 0, x, y, R * 2.6);
+  gl.addColorStop(0, 'rgba(255,226,122,0.45)'); gl.addColorStop(1, 'rgba(255,226,122,0)');
+  ctx.fillStyle = gl; ctx.fillRect(x - R * 2.6, y - R * 2.6, R * 5.2, R * 5.2);
+  ctx.translate(x, y); ctx.rotate(reduceMotion ? 0 : Math.sin(time * 1.7) * 0.12);
+  ctx.beginPath();
+  for (let k = 0; k < 10; k++) {
+    const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? R * 0.45 : R;
+    ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fillStyle = COL.star; ctx.fill();
+  ctx.lineWidth = Math.max(1, T * 0.04); ctx.strokeStyle = COL.starLo; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.arc(-R * 0.18, -R * 0.2, R * 0.13, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawSpring(c, r, a) {
+  const x = c * T, y = r * T, comp = Math.sin(a * Math.PI) * 0.18;
+  ctx.fillStyle = COL.stone; ctx.fillRect(x, y + T * 0.55, T, T * 0.45);
+  ctx.fillStyle = COL.stoneHi; ctx.fillRect(x, y + T * 0.55, T, 2);
+  ctx.strokeStyle = COL.coil; ctx.lineWidth = Math.max(1.5, T * 0.06);
+  ctx.beginPath();
+  const top = y + T * (0.2 + comp), bot = y + T * 0.55;
+  for (let i = 0; i <= 4; i++) {
+    const yy = top + (bot - top) * (i / 4);
+    ctx.lineTo(x + T * (i % 2 ? 0.28 : 0.72), yy);
+  }
+  ctx.stroke();
+  ctx.fillStyle = COL.springLo; roundRect(x + T * 0.06, top - T * 0.02, T * 0.88, T * 0.14, T * 0.05); ctx.fill();
+  ctx.fillStyle = COL.spring; roundRect(x + T * 0.06, top - T * 0.1, T * 0.88, T * 0.13, T * 0.05); ctx.fill();
+}
+
+function drawLantern(time) {
+  const x = L.gx * T, y = L.gy * T;
+  ctx.fillStyle = COL.post; ctx.fillRect(x + T * 0.44, y + T * 0.55, T * 0.12, T * 0.45);
+  ctx.fillRect(x + T * 0.3, y + T * 0.92, T * 0.4, T * 0.08);
+  // lantern body
+  const bob = Math.sin(time * 2) * T * 0.02;
+  ctx.fillStyle = '#4a3d6a'; roundRect(x + T * 0.28, y + T * 0.05 + bob, T * 0.44, T * 0.08, 2); ctx.fill();
+  const flick = 0.85 + Math.sin(time * 13) * 0.08 + Math.sin(time * 7.3) * 0.07;
+  const glass = lit > 0 ? COL.glass : '#5e517f';
+  ctx.fillStyle = glass; ctx.globalAlpha = lit > 0 ? flick : 1;
+  roundRect(x + T * 0.31, y + T * 0.13 + bob, T * 0.38, T * 0.38, T * 0.08); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#4a3d6a'; ctx.lineWidth = 2;
+  roundRect(x + T * 0.31, y + T * 0.13 + bob, T * 0.38, T * 0.38, T * 0.08); ctx.stroke();
+  ctx.fillStyle = '#4a3d6a'; ctx.fillRect(x + T * 0.3, y + T * 0.5 + bob, T * 0.4, T * 0.06);
+  if (!lit) { // waiting ember inside
+    ctx.fillStyle = `rgba(255,176,74,${0.35 + 0.25 * Math.sin(time * 3)})`;
+    ctx.beginPath(); ctx.arc(x + T * 0.5, y + T * 0.36 + bob, T * 0.06, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawHero(time) {
+  const w = P.W * T, h = P.H * T;
+  let sxs = 1 / Math.sqrt(squash), sys = squash;
+  if (hero.wall && hero.vy > 0) { sxs = 0.92; sys = 1.04; }
+  const cx = (hero.x + P.W / 2) * T, by = (hero.y + P.H) * T;
+  ctx.save();
+  ctx.translate(cx, by); ctx.scale(sxs, sys);
+  // glow
+  const gl = ctx.createRadialGradient(0, -h / 2, 0, 0, -h / 2, T * 1.3);
+  gl.addColorStop(0, 'rgba(255,176,74,0.35)'); gl.addColorStop(1, 'rgba(255,176,74,0)');
+  ctx.fillStyle = gl; ctx.fillRect(-T * 1.4, -h / 2 - T * 1.4, T * 2.8, T * 2.8);
+  // flame tuft
+  const f = Math.sin(time * 18) * 0.06, lean = -hero.face * 0.12;
+  ctx.fillStyle = COL.emberLo; flame(-w * 0.18, -h * 0.92, w * 0.22, h * (0.38 + f), lean);
+  ctx.fillStyle = COL.ember; flame(w * 0.05, -h * 0.95, w * 0.3, h * (0.55 - f), lean);
+  ctx.fillStyle = COL.emberHi; flame(w * 0.05, -h * 0.92, w * 0.14, h * (0.3 + f), lean);
+  // body
+  ctx.fillStyle = COL.emberLo; roundRect(-w / 2, -h, w, h, w * 0.32); ctx.fill();
+  ctx.fillStyle = COL.ember; roundRect(-w / 2, -h, w, h * 0.86, w * 0.32); ctx.fill();
+  ctx.fillStyle = 'rgba(255,225,163,0.6)'; roundRect(-w * 0.36, -h * 0.9, w * 0.22, h * 0.18, w * 0.1); ctx.fill();
+  // eyes
+  const ex = hero.face * w * 0.12, blink = (time % 3.7) < 0.12 ? 0.15 : 1;
+  ctx.fillStyle = COL.eye;
+  for (const s of [-1, 1]) {
+    ctx.beginPath(); ctx.ellipse(ex + s * w * 0.16, -h * 0.55, w * 0.07, h * 0.1 * blink, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+function flame(x, y, w, h, lean) {
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, y + h * 0.15);
+  ctx.quadraticCurveTo(x - w / 2, y - h * 0.4, x + lean * h, y - h);
+  ctx.quadraticCurveTo(x + w / 2, y - h * 0.4, x + w / 2, y + h * 0.15);
+  ctx.closePath(); ctx.fill();
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+$('rules').innerHTML = SCHEME.rules.concat([['Stars', 'two hidden in each tower, one for the lantern']])
+  .map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('');
+$('variantTag').textContent = `Build ${VARIANT} · ${SCHEME.label}`;
+
+// read-only view of the run, used by automated tests
+window.__lanternClimb = { variant: VARIANT, get audio() { return { ctx: AC ? AC.state : 'none', music: music.playing, level: musicOut ? +musicOut.gain.value.toFixed(2) : null, sound: save.sound }; }, get hero() { return hero; }, get state() { return state; }, get stars() { return got.slice(); }, get level() { return li; } };
+
+// boot
+setMute();
+resize();
+showTitle();
+resize();
+try { const wl = navigator.wakeLock && navigator.wakeLock.request('screen'); wl && wl.catch(() => {}); } catch (e) {}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

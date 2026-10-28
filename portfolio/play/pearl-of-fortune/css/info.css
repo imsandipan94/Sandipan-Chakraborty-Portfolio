@@ -1,0 +1,1221 @@
+/* ==========================================
+   GAME INFORMATION PAGE
+   Pearl of Fortune
+
+   Standalone static page (info.html) - reuses theme.css's own color
+   tokens/--font-fantasy import so it automatically matches the game's
+   gold/ocean palette, but defines its own layout/reset here rather
+   than linking reset.css (that file's body{overflow:hidden;
+   user-select:none; touch-action:none} rules are correct for the
+   fixed-canvas game shell, but wrong for a normal scrollable
+   document like this one).
+========================================== */
+
+*,
+*::before,
+*::after{
+
+    margin:0;
+    padding:0;
+
+    box-sizing:border-box;
+
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    position:relative;
+
+    min-height:100vh;
+
+    font-family:Arial, Helvetica, sans-serif;
+
+    color:var(--controlbar-pearl);
+
+    background:#04101c;
+
+}
+
+/* Fixed-look background layer, kept as its own position:fixed
+   element BEHIND the content rather than body{background-attachment:
+   fixed}. iOS Safari has long-standing bugs where a fixed background
+   on a scrolling body causes broken/frozen scrolling and incorrect
+   viewport-height math - position:fixed on a dedicated layer gives
+   the same "background stays put while content scrolls" look without
+   that bug. z-index:-1 only needs to clear this stacking context
+   (body has no other negative-stacked siblings), not the whole page. */
+body::before{
+
+    content:"";
+
+    position:fixed;
+    inset:0;
+
+    z-index:-1;
+
+    background-image:
+        linear-gradient(180deg, rgba(4,10,20,.55) 0%, rgba(4,10,20,.75) 40%, rgba(2,6,14,.92) 100%),
+        url("../assets/background/background.png");
+
+    background-size:cover;
+    background-position:center top;
+    background-repeat:no-repeat;
+
+}
+
+img{
+
+    display:block;
+
+    max-width:100%;
+
+}
+
+a{
+
+    color:inherit;
+    text-decoration:none;
+
+}
+
+ul{
+
+    list-style:none;
+
+}
+
+/* ==========================================
+   PAGE SHELL
+========================================== */
+
+#info-page{
+
+    max-width:900px;
+
+    margin:0 auto;
+
+    min-height:100vh;
+
+    display:flex;
+    flex-direction:column;
+
+    padding-bottom:32px;
+
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+#info-header{
+
+    position:sticky;
+    top:0;
+
+    z-index:20;
+
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:12px 16px;
+
+    background:linear-gradient(
+        180deg,
+        var(--controlbar-navy-light) 0%,
+        var(--controlbar-navy) 55%,
+        var(--controlbar-navy-deep) 100%
+    );
+
+    border-bottom:2px solid var(--controlbar-gold);
+
+    box-shadow:0 4px 16px rgba(0,0,0,.45);
+
+}
+
+#info-logo{
+
+    height:56px;
+
+    width:auto;
+
+    object-fit:contain;
+
+    justify-self:center;
+
+}
+
+.info-header-spacer{
+
+    display:block;
+
+}
+
+#info-subtitle{
+
+    text-align:center;
+
+    font-family:var(--font-fantasy);
+
+    color:var(--controlbar-gold-bright);
+
+    font-size:15px;
+
+    letter-spacing:1.5px;
+
+    text-transform:uppercase;
+
+    padding:10px 16px 4px;
+
+}
+
+/* ==========================================
+   BUTTONS (shared visual language with
+   #button-panel in the main game)
+========================================== */
+
+.info-btn{
+
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:6px;
+
+    padding:10px 18px;
+
+    border:1px solid var(--controlbar-gold);
+
+    border-radius:14px;
+
+    background:linear-gradient(
+        180deg,
+        var(--controlbar-navy-light) 0%,
+        var(--controlbar-navy-deep) 100%
+    );
+
+    color:var(--controlbar-pearl);
+
+    font-family:var(--font-fantasy);
+    font-weight:bold;
+
+    font-size:14px;
+
+    letter-spacing:.5px;
+
+    white-space:nowrap;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.2),
+        inset 0 -1px 4px rgba(0,0,0,.4);
+
+    cursor:pointer;
+
+    transition:transform .15s ease, background .2s ease;
+
+}
+
+.info-btn:hover{
+
+    background:linear-gradient(
+        180deg,
+        var(--controlbar-navy-light) 0%,
+        var(--controlbar-navy) 100%
+    );
+
+}
+
+.info-btn:active{
+
+    transform:scale(.96);
+
+}
+
+.info-btn-primary{
+
+    background:linear-gradient(180deg, #ffe9a8 0%, #d9b25c 60%, #8a6a1f 100%);
+
+    color:#2a1c04;
+
+    border-color:var(--controlbar-gold-bright);
+
+}
+
+.info-back-arrow{
+
+    font-size:18px;
+
+    line-height:1;
+
+}
+
+.info-chip-btn{
+
+    padding:8px 16px;
+
+    border:1px solid var(--controlbar-gold);
+
+    border-radius:999px;
+
+    background:rgba(11,37,64,.7);
+
+    color:var(--controlbar-gold-bright);
+
+    font-family:var(--font-fantasy);
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    letter-spacing:.5px;
+
+    cursor:pointer;
+
+}
+
+.info-chip-btn:hover{
+
+    background:rgba(21,64,107,.85);
+
+}
+
+/* ==========================================
+   SECTION NAV
+========================================== */
+
+#info-nav{
+
+    position:sticky;
+
+    top:80px;
+
+    z-index:15;
+
+    display:flex;
+
+    gap:8px;
+
+    overflow-x:auto;
+
+    padding:10px 16px;
+
+    /* Was background:rgba(4,15,28,.9) + backdrop-filter:blur(4px) -
+       sticky + backdrop-filter is a known problematic combination on
+       iOS Safari (can break the sticky element's own repaint while
+       scrolling). Raised to a near-opaque solid instead of the blur -
+       visually almost identical against the page background, without
+       relying on backdrop-filter at all. Sticky-while-scrolling
+       behavior is unchanged. */
+    background:rgba(4,13,25,.97);
+
+    border-bottom:1px solid rgba(217,178,92,.4);
+
+    scrollbar-width:thin;
+
+}
+
+#info-nav::-webkit-scrollbar{
+
+    height:6px;
+
+}
+
+#info-nav::-webkit-scrollbar-thumb{
+
+    background:var(--controlbar-gold-dark);
+
+    border-radius:6px;
+
+}
+
+.info-nav-link{
+
+    flex:0 0 auto;
+
+    padding:8px 14px;
+
+    border:1px solid rgba(217,178,92,.5);
+
+    border-radius:999px;
+
+    background:rgba(11,37,64,.6);
+
+    color:var(--controlbar-pearl);
+
+    font-family:var(--font-fantasy);
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    letter-spacing:.3px;
+
+    white-space:nowrap;
+
+    transition:background .2s ease, color .2s ease, border-color .2s ease;
+
+}
+
+.info-nav-link.active,
+.info-nav-link:hover{
+
+    background:linear-gradient(180deg, #ffe9a8 0%, #d9b25c 100%);
+
+    color:#2a1c04;
+
+    border-color:var(--controlbar-gold-bright);
+
+}
+
+/* ==========================================
+   CONTENT
+========================================== */
+
+#info-content{
+
+    flex:1;
+
+    padding:20px 16px 8px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:16px;
+
+}
+
+#info-toolbar{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+}
+
+/* ==========================================
+   SECTION CARD
+========================================== */
+
+.info-section{
+
+    border:1px solid var(--controlbar-gold);
+
+    border-radius:16px;
+
+    background:linear-gradient(180deg, rgba(21,64,107,.55) 0%, rgba(4,15,28,.82) 100%);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 6px 18px rgba(0,0,0,.35);
+
+    overflow:hidden;
+
+}
+
+.info-section > summary{
+
+    list-style:none;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+    padding:16px 18px;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    background:linear-gradient(180deg, rgba(217,178,92,.16) 0%, rgba(217,178,92,.02) 100%);
+
+}
+
+.info-section > summary::-webkit-details-marker{
+
+    display:none;
+
+}
+
+.info-section-title{
+
+    font-family:var(--font-fantasy);
+
+    font-weight:800;
+
+    font-size:20px;
+
+    color:var(--controlbar-gold-bright);
+
+    letter-spacing:.5px;
+
+}
+
+.info-chevron{
+
+    flex:0 0 auto;
+
+    width:12px;
+    height:12px;
+
+    border-right:2px solid var(--controlbar-gold-bright);
+    border-bottom:2px solid var(--controlbar-gold-bright);
+
+    transform:rotate(45deg);
+
+    transition:transform .2s ease;
+
+}
+
+.info-section[open] > summary .info-chevron{
+
+    transform:rotate(-135deg);
+
+}
+
+.info-section-body{
+
+    padding:4px 20px 22px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+    font-size:15px;
+
+    line-height:1.55;
+
+    color:rgba(244,248,255,.92);
+
+}
+
+.info-section-notes{
+
+    border-color:rgba(255,159,67,.7);
+
+}
+
+.info-section-notes .info-section-title{
+
+    color:#ffb066;
+
+}
+
+/* ==========================================
+   LISTS
+========================================== */
+
+.info-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+    padding-left:2px;
+
+}
+
+.info-list li{
+
+    position:relative;
+
+    padding-left:18px;
+
+}
+
+.info-list li::before{
+
+    content:"\2022";
+
+    position:absolute;
+
+    left:0;
+
+    color:var(--controlbar-gold-bright);
+
+    font-weight:bold;
+
+}
+
+.info-list strong{
+
+    color:var(--controlbar-gold-bright);
+
+}
+
+.info-note{
+
+    padding:12px 14px;
+
+    border:1px dashed rgba(217,178,92,.6);
+
+    border-radius:10px;
+
+    background:rgba(217,178,92,.08);
+
+    font-size:14px;
+
+}
+
+.info-subheading{
+
+    font-family:var(--font-fantasy);
+
+    color:var(--controlbar-gold-bright);
+
+    font-size:17px;
+
+    letter-spacing:.3px;
+
+    margin-top:4px;
+
+}
+
+.info-conflict-list li{
+
+    color:rgba(255,224,190,.95);
+
+}
+
+.info-conflict-list strong{
+
+    color:#ffb066;
+
+}
+
+/* ==========================================
+   SYMBOLS & PAYTABLE
+========================================== */
+
+.paytable-grid{
+
+    display:flex;
+
+    flex-direction:column;
+
+    border:1px solid rgba(217,178,92,.4);
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+}
+
+.paytable-row{
+
+    display:grid;
+
+    /* minmax(0,1fr), not a bare 1fr - a bare 1fr track's automatic
+       minimum size is its content's min-content, and .pt-symbol's
+       fixed-size 34px icon refuses to shrink, so at narrow phone
+       widths that min-content was wider than the space available and
+       pushed the whole paytable (and the page) into horizontal
+       overflow. minmax(0,1fr) lets the track actually shrink to fit -
+       long symbol names just wrap onto a second line instead. */
+    grid-template-columns:minmax(0, 1fr) repeat(3, 64px);
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:8px 12px;
+
+    border-top:1px solid rgba(217,178,92,.2);
+
+}
+
+.paytable-row:first-child{
+
+    border-top:none;
+
+}
+
+.paytable-row:nth-child(even){
+
+    background:rgba(255,255,255,.03);
+
+}
+
+.paytable-head{
+
+    background:rgba(217,178,92,.18);
+
+    font-family:var(--font-fantasy);
+
+    font-weight:bold;
+
+    color:var(--controlbar-gold-bright);
+
+    font-size:13px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+}
+
+.pt-symbol{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:10px;
+
+    min-width:0;
+
+    font-size:14px;
+
+}
+
+.pt-symbol img{
+
+    width:34px;
+    height:34px;
+
+    object-fit:contain;
+
+    border-radius:6px;
+
+    background:rgba(0,0,0,.25);
+
+}
+
+.pt-symbol em{
+
+    display:block;
+
+    font-style:normal;
+
+    font-size:11px;
+
+    color:rgba(244,248,255,.6);
+
+}
+
+.pt-count{
+
+    text-align:center;
+
+    font-weight:bold;
+
+    color:var(--controlbar-gold-bright);
+
+    font-size:14px;
+
+}
+
+.paytable-special .pt-symbol em{
+
+    color:rgba(126,255,126,.85);
+
+}
+
+.pt-nopay{
+
+    grid-column:2 / span 3;
+
+    text-align:left;
+
+    color:rgba(244,248,255,.75);
+
+    font-weight:normal;
+
+    font-size:12.5px;
+
+}
+
+/* ==========================================
+   PAYLINES
+========================================== */
+
+.paylines-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2, 1fr);
+
+    gap:12px;
+
+}
+
+@media (min-width:560px){
+
+    .paylines-grid{
+
+        grid-template-columns:repeat(3, 1fr);
+
+    }
+
+}
+
+@media (min-width:760px){
+
+    .paylines-grid{
+
+        grid-template-columns:repeat(4, 1fr);
+
+    }
+
+}
+
+.payline-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:8px;
+
+    border:1px solid rgba(217,178,92,.35);
+
+    border-radius:10px;
+
+    background:rgba(4,15,28,.5);
+
+}
+
+.payline-visual{
+
+    position:relative;
+
+    width:100%;
+
+    aspect-ratio:5 / 3;
+
+    border-radius:6px;
+
+    overflow:hidden;
+
+    background-image:url("../assets/reels/reel-bg.png");
+
+    background-size:cover;
+
+    background-position:center;
+
+    border:1px solid rgba(255,255,255,.15);
+
+}
+
+.payline-visual img{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:fill;
+
+}
+
+/* 5x3 cell outline overlay, built by js/info.js (buildPaylinesGrid())
+   as 15 plain <span> cells - sits BETWEEN the reel-bg backdrop
+   (this element's own background-image above) and the payline PNG
+   (appended after it in DOM order, so it naturally paints on top),
+   so every diagram reads as "this line, across the 5x3 grid" rather
+   than a bare line floating with no grid reference. */
+.payline-cellgrid{
+
+    position:absolute;
+
+    inset:0;
+
+    display:grid;
+
+    grid-template-columns:repeat(5, 1fr);
+    grid-template-rows:repeat(3, 1fr);
+
+}
+
+.payline-cellgrid span{
+
+    border:1px solid rgba(255,255,255,.3);
+
+}
+
+.payline-label{
+
+    font-family:var(--font-fantasy);
+
+    font-weight:bold;
+
+    font-size:12.5px;
+
+    color:var(--controlbar-pearl);
+
+    letter-spacing:.3px;
+
+}
+
+/* ==========================================
+   COLLECTORS
+========================================== */
+
+.collector-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));
+
+    gap:12px;
+
+}
+
+.collector-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:12px 8px;
+
+    border:1px solid rgba(217,178,92,.4);
+
+    border-radius:12px;
+
+    background:rgba(4,15,28,.55);
+
+    text-align:center;
+
+}
+
+.collector-card img{
+
+    width:64px;
+    height:86px;
+
+    object-fit:contain;
+
+}
+
+.collector-reel{
+
+    font-family:var(--font-fantasy);
+
+    font-weight:bold;
+
+    color:var(--controlbar-gold-bright);
+
+    font-size:13px;
+
+}
+
+.collector-feature{
+
+    font-size:12px;
+
+    color:rgba(244,248,255,.85);
+
+}
+
+/* ==========================================
+   FEATURE BANNERS
+========================================== */
+
+.info-feature-banner{
+
+    width:100%;
+
+    height:230px;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    border:1px solid rgba(217,178,92,.4);
+
+    background:rgba(0,0,0,.25);
+
+}
+
+.info-feature-banner img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+    /* fs-intro.png/lw-intro.png/pb-intro.png are tall "CONGRATULATIONS
+       / YOU'VE WON / <FEATURE>" popup banners with a lot of empty
+       padding above and below the actual ornate text panel - this
+       percentage is calibrated to center that text panel (roughly
+       35%-60% down the source image) inside this shorter banner crop,
+       rather than showing the blank top margin. Re-measure the same
+       way if these assets are ever replaced. */
+    object-position:center 53%;
+
+}
+
+.info-feature-banner-flat{
+
+    height:150px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:24px;
+
+    background:radial-gradient(circle, rgba(217,178,92,.18) 0%, rgba(4,15,28,0) 70%);
+
+    border:none;
+
+}
+
+.info-feature-banner-flat img{
+
+    width:auto;
+
+    height:100%;
+
+    object-fit:contain;
+
+}
+
+/* ==========================================
+   PICK BONUS CREATURES
+========================================== */
+
+.creature-row{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:14px;
+
+    flex-wrap:wrap;
+
+    padding:6px 0;
+
+}
+
+.creature-row img{
+
+    width:64px;
+    height:64px;
+
+    object-fit:contain;
+
+    padding:8px;
+
+    border-radius:50%;
+
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.18), rgba(0,0,0,.2));
+
+    border:1px solid rgba(217,178,92,.4);
+
+}
+
+/* ==========================================
+   LUCKY WHEEL
+========================================== */
+
+.wheel-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+
+    gap:14px;
+
+}
+
+.wheel-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:14px 10px;
+
+    border:1px solid rgba(217,178,92,.4);
+
+    border-radius:12px;
+
+    background:rgba(4,15,28,.55);
+
+    text-align:center;
+
+}
+
+.wheel-card img{
+
+    width:88px;
+    height:88px;
+
+    object-fit:contain;
+
+}
+
+.wheel-name{
+
+    font-family:var(--font-fantasy);
+
+    font-weight:bold;
+
+    color:var(--controlbar-gold-bright);
+
+    font-size:14px;
+
+}
+
+.wheel-desc{
+
+    font-size:12.5px;
+
+    color:rgba(244,248,255,.85);
+
+}
+
+/* ==========================================
+   JACKPOTS
+========================================== */
+
+.jackpot-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2, 1fr);
+
+    gap:14px;
+
+}
+
+.jackpot-card{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:flex-end;
+
+    justify-content:center;
+
+    padding-bottom:14px;
+
+    aspect-ratio:1064 / 320;
+
+}
+
+.jackpot-card img{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:contain;
+
+}
+
+.jackpot-multiplier{
+
+    position:relative;
+
+    z-index:1;
+
+    font-family:var(--font-fantasy);
+
+    font-weight:800;
+
+    font-size:clamp(16px, 4.2vw, 26px);
+
+    color:#ffd700;
+
+    text-shadow:0 1px 2px rgba(0,0,0,.6);
+
+}
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+#info-footer{
+
+    display:flex;
+
+    justify-content:center;
+
+    padding:24px 16px 8px;
+
+}
+
+#info-footer .info-btn{
+
+    padding:14px 32px;
+
+    font-size:16px;
+
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width:420px){
+
+    #info-logo{
+
+        height:44px;
+
+    }
+
+    .info-section-title{
+
+        font-size:17px;
+
+    }
+
+    .info-btn{
+
+        padding:8px 12px;
+
+        font-size:12px;
+
+    }
+
+}

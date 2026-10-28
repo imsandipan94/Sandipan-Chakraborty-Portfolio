@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 640" role="img" aria-label="Lantern Climb concept schematic: a lantern character climbing staggered platforms with a single swipe-up input">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1424"/><stop offset="1" stop-color="#0b0c0f"/></linearGradient>
+<radialGradient id="glow"><stop offset="0" stop-color="#c8a35e" stop-opacity=".55"/><stop offset="1" stop-color="#c8a35e" stop-opacity="0"/></radialGradient></defs>
+<rect width="360" height="640" fill="url(#g)"/>
+<g font-family="monospace" font-size="10" fill="#7b766e" letter-spacing="1.2">
+<text x="18" y="30">LANTERN CLIMB / CONCEPT SCHEMATIC</text>
+<text x="18" y="46" fill="#c8a35e">LEVEL = 15–30 SECONDS</text></g>
+<rect x="18" y="58" width="324" height="4" fill="#1b1e25"/><rect x="18" y="58" width="190" height="4" fill="#c8a35e"/>
+<g fill="#2a2d36" stroke="#4a4d57"><rect x="40" y="150" width="110" height="10" rx="2"/><rect x="210" y="250" width="110" height="10" rx="2"/><rect x="50" y="350" width="110" height="10" rx="2"/><rect x="200" y="450" width="110" height="10" rx="2"/><rect x="110" y="560" width="140" height="12" rx="2"/></g>
+<g fill="none" stroke="#c8a35e" stroke-width="1.4" stroke-dasharray="4 5" opacity=".8"><path d="M180 548 C 230 520, 250 480, 255 440"/><path d="M255 438 C 230 400, 150 390, 105 340"/><path d="M105 338 C 130 300, 200 290, 265 240"/><path d="M265 238 C 230 200, 130 190, 95 140"/></g>
+<circle cx="180" cy="534" r="46" fill="url(#glow)"/>
+<g transform="translate(180 534)"><rect x="-8" y="-14" width="16" height="22" rx="3" fill="#c8a35e"/><rect x="-5" y="-9" width="10" height="12" rx="2" fill="#16120a" opacity=".35"/><path d="M-5 -14 v-5 h10 v5" fill="none" stroke="#c8a35e" stroke-width="2"/></g>
+<g stroke="#ece8e0" fill="none" stroke-width="2" stroke-linecap="round" opacity=".9"><path d="M312 590 V520"/><path d="M302 530 L312 518 L322 530"/></g>
+<text x="250" y="612" font-family="monospace" font-size="10" fill="#b0aba2" letter-spacing="1.2">SWIPE UP = ONLY INPUT</text>
+<text x="18" y="612" font-family="monospace" font-size="10" fill="#7b766e" letter-spacing="1.2">NEXT LEVEL →</text>
+</svg>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact — Sandipan Chakraborty</title>
+<meta name="description" content="Get in touch about game or system design roles.">
+<meta property="og:title" content="Contact — Sandipan Chakraborty"><meta property="og:description" content="Get in touch about game or system design roles."><meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0c0f">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="nav">
+<a class="brand" href="index.html">Sandipan <b>Chakraborty</b></a>
+<button class="menu-btn" aria-expanded="false" aria-controls="nav-links" type="button">MENU</button>
+<ul class="nav-links" id="nav-links">
+<li><a href="index.html#work">Work</a></li>
+<li><a href="about.html">About</a></li>
+<li><a href="contact.html" aria-current="page">Contact</a></li>
+<li><a class="cv" href="assets/docs/Sandipan-Chakraborty-CV.pdf" target="_blank" rel="noopener">CV (PDF)</a></li>
+</ul></div></header>
+<main id="main">
+
+<div class="wrap page-title"><span class="eyebrow">Contact</span><h1>Let's talk about your game.</h1></div>
+<section class="block tight"><div class="wrap contact-grid">
+<div><p class="dim">Open to game and system design roles. Email is the quickest way to reach me.</p>
+<div class="clinks"><a href="mailto:imsandipan94@gmail.com">Email <span>imsandipan94@gmail.com</span></a><a href="tel:+918910436129">Phone <span>+91 8910-436129</span></a><a href="https://www.linkedin.com/in/imsandipan94" target="_blank" rel="noopener">LinkedIn <span>in/imsandipan94</span></a><a href="assets/docs/Sandipan-Chakraborty-CV.pdf" target="_blank" rel="noopener">CV <span>PDF</span></a></div></div>
+<form class="form" id="cf" action="mailto:imsandipan94@gmail.com" method="post" enctype="text/plain">
+<div class="f"><label for="n">Name</label><input id="n" name="name" required autocomplete="name"></div>
+<div class="f"><label for="m">Email</label><input id="m" name="email" type="email" required autocomplete="email"></div>
+<div class="f"><label for="t">Message</label><textarea id="t" name="message" required></textarea></div>
+<button class="btn primary" type="submit">Send message</button>
+<p class="dim" style="font-size:13px;margin-top:12px">Opens your email app with the message filled in.</p></form>
+</div></section>
+<script>
+document.getElementById('cf').addEventListener('submit',function(ev){ev.preventDefault();var f=ev.target;var s=encodeURIComponent('Portfolio enquiry from '+f.name.value);var b=encodeURIComponent(f.message.value+'\n\n'+f.name.value+' <'+f.email.value+'>');location.href='mailto:imsandipan94@gmail.com?subject='+s+'&body='+b;});
+</script>
+</main>
+<footer class="site-footer"><div class="wrap foot">
+<span>© 2026 Sandipan Chakraborty · Game &amp; System Designer · Bangalore</span>
+<nav><a href="index.html">Home</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="mailto:imsandipan94@gmail.com">imsandipan94@gmail.com</a><a href="https://www.linkedin.com/in/imsandipan94" target="_blank" rel="noopener">LinkedIn</a></nav>
+</div></footer>
+<script src="assets/site.js"></script>
+</body></html>

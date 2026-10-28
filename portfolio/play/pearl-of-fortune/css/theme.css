@@ -1,0 +1,179 @@
+/* ==========================================
+   THEME
+   Mystic Slot Prototype
+========================================== */
+
+/* --font-fantasy below lists Cinzel first, but neither Cinzel
+   nor Trajan Pro is installed as a system font, so every element
+   already using --font-fantasy (#button-panel, .line-win-amount,
+   etc.) has been silently falling back to Georgia. This import
+   makes Cinzel (weights 700/800/900, matching the jackpot value's
+   font-weight:800 in ui.css) actually available. If it can't load
+   (no network), everything keeps working via the existing
+   Georgia/Times New Roman fallback already in the stack below -
+   nothing breaks either way. */
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&display=swap");
+
+:root{
+
+    /* Background */
+
+    --color-background:#061423;
+
+    /* Panels */
+
+    --color-panel:#223b5d;
+
+    --color-panel-light:#365b87;
+
+    --color-border:rgba(255,255,255,.25);
+
+    /* Text */
+
+    --color-text:#ffffff;
+
+    --color-title:#FFD966;
+
+    /* Buttons */
+
+    --color-button:#365b87;
+
+    --color-button-hover:#4f7cb5;
+
+    /* Jackpot */
+
+    --color-grand:#ffcf40;
+
+    --color-major:#ff8c42;
+
+    --color-minor:#4bd3ff;
+
+    --color-mini:#7eff7e;
+
+    /* Collector overlay (behind each collector's artwork,
+       in front of the mermaid). Color is an "R,G,B" triplet
+       (no rgba() wrapper) so it can be combined with the
+       opacity tokens below - see .collector-overlay in
+       ui.css, which paints it as a top-to-bottom gradient
+       between these two opacities. Tweak any value here to
+       change every collector overlay at once. */
+
+    --collector-overlay-color:0,0,0;
+
+    --collector-overlay-opacity-top:0;
+
+    --collector-overlay-opacity-bottom:1;
+
+    /* Bottom control bar (v4.8) - underwater/gold premium
+       redesign, scoped to #button-panel in ui.css only.
+       Kept as its own token group (rather than reusing
+       --color-panel etc. above) so the bar's palette can be
+       tuned without touching any other panel in the game. */
+
+    --font-fantasy:'Cinzel','Trajan Pro','Georgia','Times New Roman',serif;
+
+    --controlbar-navy-deep:#040f1c;
+
+    --controlbar-navy:#0b2540;
+
+    --controlbar-navy-light:#15406b;
+
+    --controlbar-gold:#d9b25c;
+
+    --controlbar-gold-bright:#ffe9a8;
+
+    --controlbar-gold-dark:#8a6a1f;
+
+    --controlbar-pearl:#f4f8ff;
+
+}
+
+/* ==========================================
+   COMMON PANEL TITLE
+========================================== */
+
+.panel-title{
+
+    text-align:center;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:var(--color-title);
+
+    margin-top:8px;
+
+}
+
+/* ==========================================
+   BET CONTROLS
+========================================== */
+
+.bet-controls{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:14px;
+
+    margin-top:10px;
+
+}
+
+#bet-value{
+
+    width:80px;
+
+    text-align:center;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    color:var(--color-text);
+
+}
+
+#bet-minus,
+#bet-plus{
+
+    width:40px;
+
+    height:40px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:var(--color-button);
+
+    color:white;
+
+    font-size:28px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:0.2s;
+
+}
+
+#bet-minus:hover,
+#bet-plus:hover{
+
+    background:var(--color-button-hover);
+
+}
+
+#bet-minus:active,
+#bet-plus:active{
+
+    transform:scale(.95);
+
+}
+

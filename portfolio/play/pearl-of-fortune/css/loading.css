@@ -1,0 +1,380 @@
+/* ==========================================
+   LOADING SCREEN
+   Pearl of Fortune
+
+   Milestone - Loading Screen.
+
+   Purely a visibility/presentation layer bolted on top of the
+   EXISTING boot sequence (js/boot.js) and GameScaler (js/scaler.js) -
+   neither is modified beyond boot.js gaining one additive completion
+   signal at its very end. Nothing here changes the 800x1600 game
+   resolution, GameScaler's own scaling math, or any panel's own
+   position - #viewport (and everything inside it) is simply hidden
+   behind this overlay, via a plain CSS rule keyed off body.game-
+   loading, until js/loadingScreen.js removes that class once the real
+   game is fully ready.
+========================================== */
+
+/* THE fix for the "oversized flash" - present in the raw HTML from
+   the very first paint (body.game-loading is a static class in
+   index.html, never added by JS after the fact), so there is no
+   window where the unscaled game could ever become visible before
+   GameScaler/boot.js have run. #loading-screen (below) is what the
+   player actually sees during this time - a completely separate
+   element, entirely unaffected by this rule. */
+body.game-loading #viewport{
+
+    visibility:hidden;
+
+}
+
+/* ==========================================
+   LOADING SCREEN OVERLAY
+   Fixed to the BROWSER viewport (100vw/100vh), never the 800x1600
+   game canvas - deliberately outside of, and unrelated to, GameScaler
+   entirely. z-index comfortably above every in-game layer
+   (#pearl-fx-layer, the highest existing one, sits at 400 - see
+   game.css) so it can never be covered by anything the game itself
+   might paint underneath it.
+========================================== */
+
+#loading-screen{
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100vw;
+    height:100vh;
+
+    /* Progressive enhancement - dvw/dvh (dynamic viewport units)
+       account for mobile browser toolbars showing/hiding, avoiding
+       the gap vw/vh can leave on iPhone Safari/Android Chrome.
+       Ignored entirely by browsers that don't support them, the
+       vw/vh above already covers those. */
+    width:100dvw;
+    height:100dvh;
+
+    z-index:100000;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    overflow:hidden;
+
+    background:var(--color-background, #061423);
+
+    opacity:1;
+
+    transition:opacity 400ms ease-out;
+
+}
+
+/* Once js/loadingScreen.js decides the game is ready, this class
+   fades the whole overlay out (300-500ms, per spec) - JS removes the
+   element from the DOM entirely once the transition ends, so it never
+   lingers as an invisible click-blocker. */
+#loading-screen.loading-screen-hidden{
+
+    opacity:0;
+
+    pointer-events:none;
+
+}
+
+/* Deep underwater/ocean backdrop - reuses the SAME background art +
+   gradient tokens #background-layer itself already uses (game.css),
+   just dimmed further and blurred slightly for a soft, out-of-focus
+   "atmosphere" rather than a sharp duplicate of the game's own
+   background. No new artwork - existing asset only, per explicit
+   instruction. */
+#loading-screen-atmosphere{
+
+    position:absolute;
+
+    inset:-20px;
+
+    background-image:
+
+        url("../assets/background/background.png"),
+
+        linear-gradient(
+
+            180deg,
+
+            #04223c 0%,
+            #073b60 40%,
+            #02131f 100%
+
+        );
+
+    background-size:cover, cover;
+
+    background-position:center, center;
+
+    background-repeat:no-repeat, no-repeat;
+
+    filter:blur(5px) brightness(.9) saturate(1.15);
+
+}
+
+/* A soft dark vignette on top of the atmosphere layer above, so the
+   centered content (logo/text/bar) always reads clearly regardless of
+   how bright/busy the background art underneath happens to be -
+   lighter at the center (where the background art itself should
+   still read as a visible underwater scene) than at the edges. */
+#loading-screen-atmosphere::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:radial-gradient(
+
+        ellipse at center,
+
+        rgba(2,10,20,.1) 0%,
+        rgba(2,10,20,.45) 65%,
+        rgba(1,6,12,.75) 100%
+
+    );
+
+}
+
+#loading-screen-content{
+
+    position:relative;
+
+    z-index:1;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:28px;
+
+    padding:32px 24px;
+
+    width:100%;
+
+    max-width:760px;
+
+    box-sizing:border-box;
+
+}
+
+/* Logo - horizontally centered, proportionally scaled, never
+   stretched/distorted (width:auto + object-fit:contain, same pattern
+   #logo-area img already uses in ui.css). min(600px, 88vw) targets
+   the requested ~600px on desktop while never overflowing/causing
+   horizontal scroll on narrow mobile viewports. */
+#loading-screen-logo{
+
+    width:min(600px, 88vw);
+
+    height:auto;
+
+    object-fit:contain;
+
+    filter:drop-shadow(0 6px 22px rgba(0,0,0,.6));
+
+    animation:loadingScreenLogoBreathe 3.2s ease-in-out infinite;
+
+}
+
+@keyframes loadingScreenLogoBreathe{
+
+    0%, 100%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.025);
+    }
+
+}
+
+/* "Loading..." - existing game typography (--font-fantasy, theme.css)
+   and a gold/white treatment matching --color-title/--controlbar-gold
+   already used everywhere else in the game. */
+#loading-screen-text{
+
+    font-family:var(--font-fantasy);
+
+    font-weight:800;
+
+    font-size:clamp(20px, 4.2vw, 30px);
+
+    letter-spacing:4px;
+
+    text-transform:uppercase;
+
+    text-align:center;
+
+    color:var(--controlbar-gold-bright, #ffe9a8);
+
+    text-shadow:
+
+        0 0 14px rgba(255,233,168,.55),
+        0 2px 6px rgba(0,0,0,.7);
+
+    animation:loadingScreenTextPulse 1.6s ease-in-out infinite;
+
+}
+
+@keyframes loadingScreenTextPulse{
+
+    0%, 100%{
+        opacity:1;
+    }
+
+    50%{
+        opacity:.6;
+    }
+
+}
+
+/* ==========================================
+   PROGRESS BAR
+   A polished, Pearl-of-Fortune-styled bar - gold border/outer
+   treatment, dark deep-ocean interior, gold/bright fill with a subtle
+   glow - deliberately NOT a generic browser <progress> element.
+========================================== */
+
+#loading-screen-progress-wrap{
+
+    position:relative;
+
+    width:min(600px, 88vw);
+
+}
+
+#loading-screen-progress-track{
+
+    width:100%;
+
+    height:30px;
+
+    border-radius:999px;
+
+    border:2px solid var(--controlbar-gold, #d9b25c);
+
+    background:linear-gradient(
+
+        180deg,
+
+        var(--controlbar-navy-deep, #040f1c) 0%,
+        var(--controlbar-navy, #0b2540) 100%
+
+    );
+
+    box-shadow:
+
+        inset 0 2px 6px rgba(0,0,0,.65),
+        0 0 14px rgba(217,178,92,.35);
+
+    overflow:hidden;
+
+}
+
+#loading-screen-progress-fill{
+
+    height:100%;
+
+    width:0%;
+
+    border-radius:999px;
+
+    background:linear-gradient(
+
+        180deg,
+
+        var(--controlbar-gold-bright, #ffe9a8) 0%,
+        var(--controlbar-gold, #d9b25c) 55%,
+        var(--controlbar-gold-dark, #8a6a1f) 100%
+
+    );
+
+    box-shadow:0 0 12px rgba(255,233,168,.85);
+
+    transition:width 260ms ease-out;
+
+}
+
+/* The Pearl - rides along the fill's own leading edge (JS positions
+   it via left:<progress>%), per explicit request ("you can use the
+   pearl as a loading bar indicator"). Sits OUTSIDE
+   #loading-screen-progress-track (which owns overflow:hidden, for
+   clipping the fill only) so it can overlap the track's own top/
+   bottom edge without ever being clipped. */
+#loading-screen-pearl{
+
+    position:absolute;
+
+    top:50%;
+
+    left:0%;
+
+    width:38px;
+
+    height:38px;
+
+    object-fit:contain;
+
+    transform:translate(-50%, -50%);
+
+    filter:drop-shadow(0 0 10px rgba(255,255,255,.85));
+
+    transition:left 260ms ease-out;
+
+    pointer-events:none;
+
+}
+
+#loading-screen-percent{
+
+    font-family:var(--font-fantasy);
+
+    font-weight:700;
+
+    font-size:16px;
+
+    letter-spacing:2px;
+
+    color:var(--controlbar-pearl, #f4f8ff);
+
+    opacity:.85;
+
+}
+
+/* ==========================================
+   MOBILE
+   No horizontal overflow/scrolling on narrow viewports - the min()
+   sizing above already keeps the logo/bar within 88vw, this just
+   tightens vertical spacing/padding a bit further on short screens.
+========================================== */
+
+@media (max-width:480px){
+
+    #loading-screen-content{
+
+        gap:20px;
+
+        padding:20px 16px;
+
+    }
+
+    #loading-screen-text{
+
+        letter-spacing:2.5px;
+
+    }
+
+}

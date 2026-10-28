@@ -1,0 +1,718 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <!-- maximum-scale=1/user-scalable=no block accidental pinch/
+         double-tap zoom on the fixed-canvas game shell; viewport-fit=
+         cover lets the game paint edge-to-edge (into the safe-area
+         insets) on notched devices instead of leaving them a plain
+         browser-chrome-colored bar. -->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <title>Pearl of Fortune</title>
+
+    <meta
+        name="description"
+        content="Pearl of Fortune HTML5 Browser Prototype">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet" href="css/reset.css?v=115">
+    <link rel="stylesheet" href="css/theme.css?v=115">
+    <link rel="stylesheet" href="css/game.css?v=116">
+    <link rel="stylesheet" href="css/ui.css?v=116">
+    <link rel="stylesheet" href="css/debug.css?v=115">
+    <link rel="stylesheet" href="css/loading.css?v=115">
+
+</head>
+
+<!-- body starts with the game-loading class present in the raw HTML
+     itself (not added by JS after the fact) - #viewport is hidden by
+     a plain CSS rule scoped to this class (css/loading.css), so there
+     is no window where the unscaled/oversized game could paint before
+     JS ever runs. js/loadingScreen.js removes this class only once
+     the game is fully ready. -->
+<body class="game-loading">
+
+    <!-- ========================================= -->
+    <!-- LOADING SCREEN -->
+    <!-- Deliberately the FIRST element in <body>, before #viewport -->
+    <!-- itself, so it's already in the DOM (and already painted) the -->
+    <!-- instant the stylesheets above finish loading - no JS needed -->
+    <!-- for it to simply be visible. js/loadingScreen.js only -->
+    <!-- controls its progress bar and its own eventual fade-out/ -->
+    <!-- removal, never its initial visibility. -->
+    <!-- ========================================= -->
+
+    <div id="loading-screen">
+
+        <div id="loading-screen-atmosphere"></div>
+
+        <div id="loading-screen-content">
+
+            <img
+                id="loading-screen-logo"
+                src="assets/logo/logo.png"
+                alt="Pearl of Fortune">
+
+            <div id="loading-screen-text">Loading&hellip;</div>
+
+            <!-- #loading-screen-progress-track owns overflow:hidden
+                 (clips the fill to its own rounded shape) - the pearl
+                 rides as a SIBLING of the track, inside this wrap, so
+                 it can visibly overlap the track's own top/bottom edge
+                 without ever being clipped by it. -->
+            <div id="loading-screen-progress-wrap">
+
+                <div id="loading-screen-progress-track">
+
+                    <div id="loading-screen-progress-fill"></div>
+
+                </div>
+
+                <img
+                    id="loading-screen-pearl"
+                    src="assets/symbols/pearl.png"
+                    alt="">
+
+            </div>
+
+            <div id="loading-screen-percent">0%</div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- VIEWPORT -->
+    <!-- ========================================= -->
+
+    <div id="viewport">
+
+        <!-- ========================================= -->
+        <!-- GAME ROOT (Fixed 800 Ã— 1600) -->
+        <!-- ========================================= -->
+
+        <div id="game">
+
+            <!-- ===================================== -->
+            <!-- BACKGROUND -->
+            <!-- ===================================== -->
+
+            <div id="background-layer"></div>
+
+            <!-- ===================================== -->
+            <!-- GAME SCENE -->
+            <!-- ===================================== -->
+
+            <div id="scene">
+
+                <!-- ===================================== -->
+                <!-- TOP PANEL -->
+                <!-- ===================================== -->
+
+                <header id="top-panel">
+
+                    <!-- Grand Jackpot -->
+
+                    <div id="grand-jackpot" class="jackpot">
+
+                        <div class="jackpot-art"></div>
+
+                        <span class="jackpot-title">
+
+                            GRAND
+
+                        </span>
+
+                        <span id="grand-value" class="jackpot-value">
+
+                            50,000
+
+                        </span>
+
+                    </div>
+
+                    <!-- Major Jackpot -->
+
+                    <div id="major-jackpot" class="jackpot">
+
+                        <div class="jackpot-art"></div>
+
+                        <span class="jackpot-title">
+
+                            MAJOR
+
+                        </span>
+
+                        <span id="major-value" class="jackpot-value">
+
+                            25,000
+
+                        </span>
+
+                    </div>
+
+                    <!-- Logo -->
+
+                    <div id="logo-area">
+
+                        <img
+                            id="game-logo"
+                            src="assets/logo/logo.png"
+                            alt="Pearl of Fortune">
+
+                    </div>
+
+                    <!-- Minor Jackpot -->
+
+                    <div id="minor-jackpot" class="jackpot">
+
+                        <div class="jackpot-art"></div>
+
+                        <span class="jackpot-title">
+
+                            MINOR
+
+                        </span>
+
+                        <span id="minor-value" class="jackpot-value">
+
+                            10,000
+
+                        </span>
+
+                    </div>
+
+                    <!-- Mini Jackpot -->
+
+                    <div id="mini-jackpot" class="jackpot">
+
+                        <div class="jackpot-art"></div>
+
+                        <span class="jackpot-title">
+
+                            MINI
+
+                        </span>
+
+                        <span id="mini-value" class="jackpot-value">
+
+                            5,000
+
+                        </span>
+
+                    </div>
+
+                </header>
+
+                <!-- ===================================== -->
+                <!-- FEATURE TEST CHEATBOX (Developer Tool) -->
+                <!-- ===================================== -->
+
+                <div id="feature-test-panel" class="feature-test-panel">
+
+                    <div class="feature-test-label">
+                        FEATURE TEST
+                    </div>
+
+                    <select id="feature-test-select" class="feature-test-select">
+                        <option value="WILD_RESPIN_L">WILD RESPIN L</option>
+                        <option value="WILD_RESPIN_R">WILD RESPIN R</option>
+                        <option value="PICK_BONUS">Pick Bonus</option>
+                        <option value="LUCKY_WHEEL">Lucky Wheel</option>
+                        <option value="FREE_SPINS">Free Spins</option>
+                    </select>
+
+                    <button
+                        id="feature-test-play"
+                        class="feature-test-play"
+                        type="button">
+                        PLAY
+                    </button>
+
+                    <div id="feature-test-status" class="feature-test-status"></div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- MERMAID -->
+                <!-- ===================================== -->
+
+                <section id="mermaid-panel">
+
+                    <img
+                        id="mermaid-art"
+                        src="assets/mermaid/mermaid-idle.png"
+                        alt="Mermaid">
+
+                </section>
+
+                <!-- ===================================== -->
+                <!-- COLLECTORS -->
+                <!-- ===================================== -->
+
+                <section id="collector-panel">
+
+                    <div class="collector">
+                        <div class="collector-overlay"></div>
+                        <div class="collector-title">
+                            Lucky Wheel
+                        </div>
+                        <div class="collector-art-wrap">
+                            <img
+                                id="collector-art-1"
+                                class="collector-art"
+                                src="assets/collectors/luckyWheel/idle.png"
+                                alt="Lucky Wheel collector">
+                        </div>
+                        <div
+                            id="collector-progress-1"
+                            class="collector-progress">
+                            0/3
+                        </div>
+                    </div>
+
+                    <div class="collector">
+                        <div class="collector-overlay"></div>
+                        <div class="collector-title">
+                            Wild Respin
+                        </div>
+                        <div class="collector-art-wrap">
+                            <img
+                                id="collector-art-2"
+                                class="collector-art"
+                                src="assets/collectors/wildRespinLeft/idle.png"
+                                alt="Wild Respin Left collector">
+                        </div>
+                        <div
+                            id="collector-progress-2"
+                            class="collector-progress">
+                            0/3
+                        </div>
+                    </div>
+
+                    <div class="collector">
+                        <div class="collector-overlay"></div>
+                        <div class="collector-title">
+                            Free Spins
+                        </div>
+                        <div class="collector-art-wrap">
+                            <img
+                                id="collector-art-3"
+                                class="collector-art"
+                                src="assets/collectors/freeSpins/idle.png"
+                                alt="Free Spins collector">
+                        </div>
+                        <div
+                            id="collector-progress-3"
+                            class="collector-progress">
+                            0/3
+                        </div>
+                    </div>
+
+                    <div class="collector">
+                        <div class="collector-overlay"></div>
+                        <div class="collector-title">
+                            Wild Respin
+                        </div>
+                        <div class="collector-art-wrap">
+                            <img
+                                id="collector-art-4"
+                                class="collector-art"
+                                src="assets/collectors/wildRespinRight/idle.png"
+                                alt="Wild Respin Right collector">
+                        </div>
+                        <div
+                            id="collector-progress-4"
+                            class="collector-progress">
+                            0/3
+                        </div>
+                    </div>
+
+                    <div class="collector">
+                        <div class="collector-overlay"></div>
+                        <div class="collector-title">
+                            Pick Bonus
+                        </div>
+                        <div class="collector-art-wrap">
+                            <img
+                                id="collector-art-5"
+                                class="collector-art"
+                                src="assets/collectors/pickBonus/idle.png"
+                                alt="Pick Bonus collector">
+                        </div>
+                        <div
+                            id="collector-progress-5"
+                            class="collector-progress">
+                            0/3
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ===================================== -->
+                <!-- REELS -->
+                <!-- ===================================== -->
+
+                <section id="reel-panel">
+
+                    <div id="reels-container">
+
+                        <!-- Payline overlay layer - deliberately the
+                             FIRST child (before the .reel elements
+                             below), so plain DOM-order stacking puts
+                             it above #reels-container's own reel-bg
+                             background but below every reel's symbols -
+                             see #payline-layer in ui.css. -->
+                        <div id="payline-layer"></div>
+
+                        <div class="reel" id="reel-1"></div>
+
+                        <div class="reel" id="reel-2"></div>
+
+                        <div class="reel" id="reel-3"></div>
+
+                        <div class="reel" id="reel-4"></div>
+
+                        <div class="reel" id="reel-5"></div>
+
+                        <div id="reel-frame"></div>
+
+                    </div>
+
+                </section>
+
+                <!-- ===================================== -->
+                <!-- PICK BONUS -->
+                <!-- ===================================== -->
+
+                <section id="pick-bonus-panel">
+
+                    <div id="pick-bonus-counter">
+
+                        <span class="pick-bonus-counter-title">
+                            PICKS LEFT
+                        </span>
+
+                        <div id="pick-bonus-pearls"></div>
+
+                    </div>
+
+                    <div id="pick-bonus-speech-bubble">
+                        <span id="pick-bonus-speech-bubble-text"></span>
+                    </div>
+
+                    <div id="pick-bonus-grid-overlay"></div>
+
+                    <div id="pick-bonus-grid"></div>
+
+                </section>
+
+                <!-- ===================================== -->
+                <!-- LUCKY WHEEL -->
+                <!-- Each wheel is a full circle rotating inside a -->
+                <!-- half-size CLIP container (see #lucky-wheel-panel -->
+                <!-- in ui.css) - only half of it is ever visible, -->
+                <!-- the rest extends off-canvas. Segment prize text -->
+                <!-- is a DOM overlay (.lw-wheel-segments), rotating -->
+                <!-- together with the wheel since it lives INSIDE -->
+                <!-- the same .lw-wheel-rotate element the spin -->
+                <!-- animation transforms. Each wheel's own pointer -->
+                <!-- is a sibling of the clip, never rotates. -->
+                <!-- ===================================== -->
+
+                <section id="lucky-wheel-panel">
+
+                    <div id="lw-wheel-bronze" class="lw-wheel lw-wheel-bronze">
+
+                        <div class="lw-wheel-clip">
+
+                            <div id="lw-wheel-bronze-rotate" class="lw-wheel-rotate">
+
+                                <img class="lw-wheel-img" src="assets/luckywheel/bronze-wheel.png" alt="Bronze Wheel">
+
+                                <div id="lw-wheel-bronze-segments" class="lw-wheel-segments"></div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="lw-wheel-pointer lw-wheel-pointer-bronze"></div>
+
+                    </div>
+
+                    <div id="lw-wheel-silver" class="lw-wheel lw-wheel-silver">
+
+                        <div class="lw-wheel-clip">
+
+                            <div id="lw-wheel-silver-rotate" class="lw-wheel-rotate">
+
+                                <img class="lw-wheel-img" src="assets/luckywheel/silver-wheel.png" alt="Silver Wheel">
+
+                                <div id="lw-wheel-silver-segments" class="lw-wheel-segments"></div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="lw-wheel-pointer lw-wheel-pointer-silver"></div>
+
+                    </div>
+
+                    <div id="lw-wheel-golden" class="lw-wheel lw-wheel-golden">
+
+                        <div class="lw-wheel-clip">
+
+                            <div id="lw-wheel-golden-rotate" class="lw-wheel-rotate">
+
+                                <img class="lw-wheel-img" src="assets/luckywheel/gold-wheel.png" alt="Golden Wheel">
+
+                                <div id="lw-wheel-golden-segments" class="lw-wheel-segments"></div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="lw-wheel-pointer lw-wheel-pointer-golden"></div>
+
+                    </div>
+
+                </section>
+
+                <!-- ===================================== -->
+                <!-- YOU WON BOX -->
+                <!-- Shared by Pick Bonus/Lucky Wheel (PickBonusFeature/ -->
+                <!-- LuckyWheelFeature, js/) - per explicit request, -->
+                <!-- each reward zaps HERE instead of straight to -->
+                <!-- Total Win; only once every reward has landed does -->
+                <!-- this box's own accumulated total zap onward to -->
+                <!-- Total Win itself. Positioned in the shared gap -->
+                <!-- both scenes leave clear above their own busy area -->
+                <!-- (the Pick Bonus grid/counter, the Bronze+Silver -->
+                <!-- wheels) - see #you-won-box in ui.css. -->
+                <!-- ===================================== -->
+
+                <div id="you-won-box">
+
+                    <div id="you-won-box-label">You Won</div>
+
+                    <div id="you-won-box-amount">0</div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- BUTTON PANEL -->
+                <!-- ===================================== -->
+
+                <footer id="button-panel">
+
+                    <!-- Audio Toggle (formerly Menu) -->
+
+                    <button id="audio-button" aria-pressed="false">
+
+                        <img
+                            id="audio-icon"
+                            class="audio-icon"
+                            src="assets/buttons/audio-on.png"
+                            alt="Audio On">
+
+                        AUDIO
+
+                    </button>
+
+                    <!-- Info -->
+
+                    <button id="info-button">
+
+                        INFO
+
+                    </button>
+
+                    <!-- Total Win -->
+
+                    <div id="total-win">
+
+                        <span class="panel-title">
+
+                            TOTAL WIN
+
+                        </span>
+
+                        <span id="total-win-value">
+
+                            0
+
+                        </span>
+
+                    </div>
+
+                    <!-- Balance -->
+
+                    <div id="balance">
+
+                        <span class="panel-title">
+
+                            BALANCE
+
+                        </span>
+
+                        <span id="balance-value">
+
+                            10,000
+
+                        </span>
+
+                    </div>
+
+                    <!-- Bet -->
+
+                    <div id="bet">
+
+                        <span class="panel-title">
+
+                            BET
+
+                        </span>
+
+                        <button id="bet-minus">
+
+                            −
+
+                        </button>
+
+                        <span id="bet-value">
+
+                            100
+
+                        </span>
+
+                        <button id="bet-plus">
+
+                            +
+
+                        </button>
+
+                    </div>
+
+                    <!-- Spin -->
+
+                    <button id="spin-button">
+
+                        <img src="assets/buttons/spin.png" alt="Spin">
+
+                    </button>
+
+                </footer>
+
+            </div>
+
+            <!-- ===================================== -->
+            <!-- POPUPS -->
+            <!-- ===================================== -->
+
+            <div id="popup-layer"></div>
+
+            <!-- ===================================== -->
+            <!-- EFFECTS -->
+            <!-- ===================================== -->
+
+            <div id="effects-layer"></div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- PEARL FX LAYER                             -->
+    <!-- Deliberately OUTSIDE #viewport/#game (a     -->
+    <!-- direct child of <body>) - see #pearl-fx-    -->
+    <!-- layer in game.css for why.                 -->
+    <!-- ========================================= -->
+
+    <div id="pearl-fx-layer"></div>
+
+    <!-- ========================================= -->
+    <!-- ROTATE DEVICE OVERLAY -->
+    <!-- Shown ONLY via a CSS media query (see game.css) when the -->
+    <!-- viewport is both landscape AND short enough to be a phone -->
+    <!-- rotated sideways - stays hidden on desktop/tablet, where -->
+    <!-- landscape is a normal usable orientation. Deliberately a -->
+    <!-- direct child of <body> (same as #pearl-fx-layer above), so -->
+    <!-- it sits outside #viewport/#game and is never touched by -->
+    <!-- scaler.js's own transform. No JS involved. -->
+    <!-- ========================================= -->
+
+    <div id="rotate-overlay">
+
+        <div id="rotate-overlay-icon" aria-hidden="true">&#128241;</div>
+
+        <div id="rotate-overlay-text">Please rotate your device to portrait mode to play</div>
+
+    </div>
+
+    <!-- JavaScript -->
+
+    <!-- Deliberately the FIRST script - starts preloading the
+         essential Base Game assets and driving the loading screen's
+         own progress bar immediately, without waiting on config.js/
+         any manager. Its own reveal-the-game step still waits on
+         boot.js's own completion signal further below. -->
+    <script src="js/loadingScreen.js?v=115"></script>
+
+    <script src="js/config.js?v=115"></script>
+    <script src="js/scaler.js?v=115"></script>
+
+    <script src="js/symbolManager.js?v=115"></script>
+    <script src="js/reelStripManager.js?v=115"></script>
+    <script src="js/paylineManager.js?v=115"></script>
+    <script src="js/reelMatrix.js?v=115"></script>
+    <script src="js/paylineEvaluator.js?v=115"></script>
+    <script src="js/winEvaluator.js?v=115"></script>
+
+    <script src="js/rngManager.js?v=115"></script>
+    <script src="js/balanceManager.js?v=115"></script>
+    <script src="js/betManager.js?v=115"></script>
+    <script src="js/jackpotManager.js?v=115"></script>
+    <script src="js/uiManager.js?v=115"></script>
+    <script src="js/audioManager.js?v=116"></script>
+
+    <script src="js/mathModel.js?v=115"></script>
+
+    <script src="js/reelManager.js?v=115"></script>
+    <script src="js/spinManager.js?v=115"></script>
+
+    <script src="js/winManager.js?v=115"></script>
+
+    <script src="js/collectorManager.js?v=115"></script>
+
+    <script src="js/featureManager.js?v=115"></script>
+
+    <script src="js/animationManager.js?v=115"></script>
+
+    <script src="js/wildRespinFeature.js?v=115"></script>
+
+    <script src="js/luckyWheelFeature.js?v=115"></script>
+
+    <script src="js/freeSpinsFeature.js?v=115"></script>
+
+    <script src="js/bubbleBonusFeature.js?v=115"></script>
+
+    <script src="js/pickBonusFeature.js?v=115"></script>
+
+    <script src="js/mermaidStateManager.js?v=115"></script>
+
+    <script src="js/gameManager.js?v=115"></script>
+
+    <script src="js/featureTestManager.js?v=115"></script>
+
+    <script src="js/boot.js?v=115"></script>
+
+</body>
+
+</html>

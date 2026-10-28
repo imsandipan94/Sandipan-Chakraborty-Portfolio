@@ -1,0 +1,76 @@
+/* ==========================================
+   DEBUG MODE
+   Mystic Slot Prototype
+========================================== */
+
+/*
+    Uncomment the section below whenever
+    you need to visualize the layout.
+*/
+
+/*
+
+#top-panel{
+
+    outline:2px solid #ff4444;
+
+}
+
+#mermaid-panel{
+
+    outline:2px solid #44ff44;
+
+}
+
+#collector-panel{
+
+    outline:2px solid #4488ff;
+
+}
+
+#reel-panel{
+
+    outline:2px solid #ffff44;
+
+}
+
+#button-panel{
+
+    outline:2px solid #ff44ff;
+
+}
+
+*/
+
+/* ==========================================
+   PLACEHOLDER ELEMENTS
+========================================== */
+
+.jackpot,
+#logo-area,
+#mermaid-placeholder,
+.collector,
+.symbol,
+#audio-button,
+#info-button,
+#total-win,
+#balance,
+#bet,
+#spin-button{
+
+    transition:all .2s ease;
+
+}
+
+/* ==========================================
+   HOVER (Development Only)
+========================================== */
+
+.jackpot:hover,
+.collector:hover,
+.symbol:hover,
+button:hover{
+
+    filter:brightness(1.15);
+
+}

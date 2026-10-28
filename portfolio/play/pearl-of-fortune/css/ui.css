@@ -1,0 +1,3541 @@
+/* ==========================================
+   UI LAYOUT
+   Mystic Slot Prototype
+========================================== */
+
+/* ==========================================
+   TOP PANEL
+========================================== */
+
+#top-panel{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:800px;
+    height:170px;
+
+    display:grid;
+
+    grid-template-columns:266px 268px 266px;
+    grid-template-rows:80px 80px;
+
+    justify-content:center;
+    align-content:center;
+
+    gap:10px 0;
+
+    padding:5px 0;
+
+}
+
+/* ---------- Jackpot ---------- */
+
+.jackpot{
+
+    position:relative;
+
+    border:0px solid #ffffff55;
+
+    border-radius:10px;
+
+    background:transparent;
+
+    box-shadow:none;
+
+}
+
+/* ---------- Jackpot Artwork (v4.7) ----------
+   Drop-in replacement assets:
+   assets/jackpots/grand.png
+   assets/jackpots/major.png
+   assets/jackpots/minor.png
+   assets/jackpots/mini.png
+   Recommended export EACH: 1064 x 320 (4x master,
+   same ~3.325:1 aspect ratio as the ~266 x 80 display
+   area). Rendered as a background-image on a dedicated
+   layer div so a missing file paints nothing (transparent)
+   instead of a broken-image icon, leaving the existing
+   bordered/colored .jackpot box as the fallback look until
+   artwork is dropped in. background-size:contain keeps the
+   full image visible, centered, never stretched or cropped.
+   This div is the FIRST child of each .jackpot, so with no
+   z-index set it naturally paints behind the title/value
+   text below (later DOM order wins ties) - the jackpot
+   VALUE spans are untouched and keep receiving their values
+   from the existing JS systems, fully independent of the
+   artwork. Scales together with #game via the existing
+   GameScaler - no second scaling system added. */
+.jackpot-art{
+
+    position:absolute;
+
+    inset:0;
+
+    background-size:contain;
+
+    background-position:center;
+
+    background-repeat:no-repeat;
+
+    pointer-events:none;
+
+}
+
+#grand-jackpot .jackpot-art{
+
+    background-image:url("../assets/jackpots/grand.png");
+
+}
+
+#major-jackpot .jackpot-art{
+
+    background-image:url("../assets/jackpots/major.png");
+
+}
+
+#minor-jackpot .jackpot-art{
+
+    background-image:url("../assets/jackpots/minor.png");
+
+}
+
+#mini-jackpot .jackpot-art{
+
+    background-image:url("../assets/jackpots/mini.png");
+
+}
+
+/* ---------- Jackpot Title ---------- */
+
+.jackpot-title{
+
+    display:none;
+
+    position:absolute;
+
+    top:8px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    white-space:nowrap;
+
+}
+
+/* ---------- Jackpot Value ----------
+   Live HTML text, dynamically controlled by whatever future
+   game logic sets #grand-value/#major-value/#minor-value/
+   #mini-value's textContent - this only styles it, never reads
+   or writes the value itself. Positioned as its own band across
+   the bottom portion of the existing .jackpot box (never moving
+   or resizing that box) so it lines up with where each
+   assets/jackpots/*.png already shows its own baked-in number,
+   then centers the actual live text inside that band with flex
+   (both axes) rather than the old bottom+translateX anchor.
+   Flat bright golden-yellow fill (no gradient) + dark stroke +
+   layered shadows for a premium casino "embossed metal" text
+   treatment - see --font-fantasy in theme.css for the Cinzel
+   import this relies on. */
+
+.jackpot-value{
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    position:absolute;
+
+    left:4px;
+    right:4px;
+    bottom:4px;
+    height:44px;
+
+    overflow:hidden;
+
+    font-family:var(--font-fantasy);
+    font-weight:800;
+    font-size:40px;
+    line-height:1;
+
+    letter-spacing:.5px;
+
+    white-space:nowrap;
+
+    color:#ffd700;
+
+    pointer-events:none;
+
+}
+
+#logo-area{
+
+    grid-column:2;
+    grid-row:1 / span 2;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+}
+
+/* Logo art: centered, never stretched, always inside
+   the container, scales with the fixed-resolution game
+   root via the existing scaler system (no extra JS
+   needed - it's just a normal element inside it). */
+#logo-area img{
+
+    max-width:100%;
+    max-height:100%;
+
+    width:auto;
+    height:auto;
+
+    object-fit:contain;
+
+}
+
+/* ==========================================
+   FEATURE TEST CHEATBOX (Developer Tool Only)
+   Gated entirely behind CONFIG.DEBUG.CHEATBOX (config.js) -
+   FeatureTestManager.initialize() (js/featureTestManager.js) adds
+   .visible only when that flag is true, and wires up zero event
+   listeners otherwise - hidden here (display:none, no layout space
+   at all) is the safe default regardless. Positioned top-right of
+   the game canvas, directly below the Mini Jackpot cell (#top-panel's
+   own bottom-right grid cell, y:0-170 - never touched by this) and
+   well clear of every real gameplay panel below it (#collector-panel
+   starts at y:800, #reel-panel at y:970 - neither moved or resized).
+========================================== */
+
+.feature-test-panel{
+
+    display:none;
+
+    position:absolute;
+
+    top:180px;
+    right:15px;
+
+    width:210px;
+
+    padding:10px 12px;
+
+    flex-direction:column;
+    align-items:stretch;
+
+    gap:6px;
+
+    background:rgba(10,20,35,.88);
+
+    border:2px solid rgba(255,80,80,.85);
+    border-radius:10px;
+
+    z-index:5;
+
+    font-family:var(--font-fantasy);
+
+}
+
+.feature-test-panel.visible{
+
+    display:flex;
+
+}
+
+/* Applied by FeatureTestManager.syncPlayButtonState() while a normal
+   spin or any Bonus Feature (cheatbox-launched or organic) is
+   active - purely a visual dimming, PLAY/the dropdown are already
+   independently disabled at the same time (see below). */
+.feature-test-panel.busy{
+
+    opacity:.55;
+
+}
+
+.feature-test-label{
+
+    font-size:14px;
+    font-weight:800;
+
+    letter-spacing:1px;
+
+    color:#ff6b6b;
+
+    text-align:center;
+
+}
+
+.feature-test-select{
+
+    width:100%;
+
+    padding:4px 6px;
+
+    border:1px solid rgba(255,255,255,.4);
+    border-radius:6px;
+
+    background:#1a2436;
+
+    color:#fff;
+
+    font-size:13px;
+
+}
+
+.feature-test-play{
+
+    width:100%;
+
+    padding:6px 0;
+
+    border:1px solid rgba(255,80,80,.85);
+    border-radius:6px;
+
+    background:rgba(255,80,80,.25);
+
+    color:#fff;
+
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:1px;
+
+    cursor:pointer;
+
+}
+
+.feature-test-play:disabled{
+
+    opacity:.5;
+
+    cursor:not-allowed;
+
+}
+
+.feature-test-status{
+
+    min-height:14px;
+
+    font-size:11px;
+
+    color:#ffcf8a;
+
+    text-align:center;
+
+    white-space:normal;
+    line-height:1.3;
+
+}
+
+/* ==========================================
+   MERMAID PANEL
+========================================== */
+
+#mermaid-panel{
+
+    position:absolute;
+
+    top:170px;
+    left:25px;
+
+    width:750px;
+
+    /* Milestone - Pick Bonus. Height reaches all the way down to the
+       Button Panel's own top edge (1600-170=1430, i.e. 170+1260) -
+       the SAME box Pick Bonus's own extended Mermaid area already
+       used, now the ONE universal size for every instance of the
+       Mermaid area (Base Game/Free Spins/Pick Bonus/Lucky Wheel
+       later), per explicit request, rather than a Pick-Bonus-only
+       override on top of a smaller default. Width (750px, same as
+       the collector panel) is generous enough that the image's own
+       aspect ratio - not this box - decides its final render size. */
+    height:1260px;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    /* Layering rule (explicit, per request): background < Mermaid <
+       everything else in the game. Bug fix - this used to be
+       z-index:1, a POSITIVE value, which (per CSS's own stacking
+       rules) always paints above every z-index:auto sibling
+       regardless of DOM order - #reel-panel has no z-index of its
+       own (auto), so once this box grew tall enough to actually
+       overlap the Reel Panel's own 970-1430 range (see above), the
+       Mermaid was silently painting IN FRONT of the reels instead of
+       behind them. z-index:0 (not a positive value) puts this back
+       in the SAME "auto" paint bucket as #reel-panel/#top-panel,
+       ordered by plain DOM position (Mermaid Panel sits between them
+       in index.html) - correctly below both. #collector-panel(2)/
+       #pick-bonus-panel(3)/#button-panel(210) all keep their own
+       explicit POSITIVE z-index, so they stay above this either way. */
+    z-index:0;
+
+}
+
+/* Mermaid art: scales to fill the full mermaid-panel box
+   (width/height 100%), aspect ratio preserved via
+   object-fit:contain (never stretched/distorted). */
+#mermaid-panel img{
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+    /* Milestone - Pick Bonus. The box above is now taller than the
+       art's own natural render size (its aspect ratio still caps it
+       at roughly its original ~750x800 footprint even inside this
+       taller box), so anchoring to the box's own TOP (rather than
+       object-fit:contain's default center) keeps the Mermaid's
+       head/upper body starting right at top:170px - exactly where
+       she's always rendered - regardless of how much extra empty
+       height sits below her. Without this, centering her inside the
+       taller box would shift her whole body downward compared to
+       every previous milestone's look. */
+    object-position:top center;
+
+}
+
+/* ==========================================
+   MERMAID IDLE ANIMATION (v5.1)
+   Continuous, subtle underwater float/breathe loop on
+   #mermaid-art only - transform-based (translate + scale),
+   so #mermaid-panel's own position/size above is never
+   touched and no layout shift occurs. Nothing in JS
+   references #mermaid-art, so this runs independently of
+   the game state machine and can't conflict with reel
+   spinning, win evaluation, collectors, jackpots, balance,
+   bet, spin, or audio.
+========================================== */
+
+#mermaid-art{
+
+    animation:mermaidIdle 4s ease-in-out infinite;
+
+    transform-origin:50% 100%;
+
+}
+
+/* Single 0%-50%-100% arc (not four quarter-stops) so there is
+   only one continuous ease-in-out sweep per loop instead of
+   several direction reversals - reads as one fluid drift
+   rather than a sequence of small pulses. */
+@keyframes mermaidIdle{
+
+    0%, 100%{
+        transform:translate(0, 0) scale(1);
+    }
+
+    50%{
+        transform:translate(3px, -10px) scale(1.015);
+    }
+
+}
+
+/* ==========================================
+   COLLECTOR PANEL
+========================================== */
+
+#collector-panel{
+
+    position:absolute;
+
+    top:800px;
+    left:25px;
+
+    width:750px;
+    height:200px;
+
+    display:grid;
+
+    grid-template-columns:repeat(5,150px);
+
+    /* Explicitly above #mermaid-panel (z-index:0) so the
+       collectors render in front of the Mermaid's tail where
+       the two panels now overlap. */
+    z-index:2;
+
+}
+
+.collector{
+
+    /* Anchors .collector-overlay (position:absolute below)
+       to this cell instead of some further-up ancestor. */
+    position:relative;
+
+    display:flex;
+
+    flex-direction:column;
+
+    /* flex-end (not center): the collector-panel's own box
+       already sits flush against #reel-panel's top edge, but
+       object-fit:contain shrinks this square art to 150x150
+       inside the 150x200 cell, leaving empty space above and
+       below it when centered. Bottom-aligning it here closes
+       that gap so the art itself touches the reel instead of
+       floating above it. */
+    justify-content:flex-end;
+    align-items:center;
+
+    /* Matches #collector-panel's height so each grid cell
+       has an unambiguous 150x200 box for .collector-art's
+       100% width/height fill to resolve against. */
+    height:200px;
+
+    color:white;
+
+    text-align:center;
+
+    font-size:18px;
+
+}
+
+/* ==========================================
+   COLLECTOR OVERLAY
+   Semi-transparent color panel behind each
+   collector's artwork. #collector-panel already
+   sits above #mermaid-panel (z-index:2 vs 0), so
+   this only needs to paint below .collector-art
+   within that same stack - see the position:relative
+   added to .collector-art below, which (combined with
+   this element's DOM order before it) puts the art on
+   top without a separate z-index.
+   Color/opacity are controlled via the
+   --collector-overlay-color (an "R,G,B" triplet) and
+   --collector-overlay-opacity-top / -bottom tokens in
+   theme.css - change those to restyle every collector
+   overlay at once.
+========================================== */
+
+.collector-overlay{
+
+    position:absolute;
+
+    inset:0;
+
+    /* Shifts the whole gradient panel up 20px within its
+       150x200 cell without changing its height. */
+    transform:translateY(-25px);
+
+    background:linear-gradient(
+        to bottom,
+        rgba(var(--collector-overlay-color), var(--collector-overlay-opacity-top)) 0%,
+        rgba(var(--collector-overlay-color), var(--collector-overlay-opacity-bottom)) 100%
+    );
+
+    pointer-events:none;
+
+}
+
+/* ==========================================
+   COLLECTOR TITLE
+========================================== */
+
+.collector-title{
+
+    display:none;
+
+    font-size:18px;
+
+}
+
+/* ==========================================
+   COLLECTOR ART WRAP
+   Holds just the .collector-art image, positioned above the
+   earlier, also-positioned .collector-overlay via normal
+   stacking order (no z-index juggling needed). The upgrade/
+   reset glow below targets THIS wrapper (not .collector-art
+   itself, which .pearl-fx-impact already animates, and not the
+   parent .collector, which .collector-overlay also lives in) -
+   so its filter/brightness pulse never composites and brightens
+   the overlay sitting behind it.
+========================================== */
+
+.collector-art-wrap{
+
+    position:relative;
+
+    width:100%;
+    height:100%;
+
+}
+
+/* ==========================================
+   COLLECTOR ART (v4.3)
+   idle/stage1/stage2/activate, swapped by
+   CollectorManager.updateUI(). Fills the full
+   150x200 collector cell (now that the title
+   above it is hidden), aspect ratio preserved,
+   never stretched.
+========================================== */
+
+.collector-art{
+
+    display:block;
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+}
+
+/* ==========================================
+   COLLECTOR PROGRESS
+   Debug-only text ("0/3" etc). Stays in the DOM
+   and keeps updating every spin, just hidden -
+   toggle this back to visible for debugging.
+========================================== */
+
+.collector-progress{
+
+    display:none;
+
+    font-size:16px;
+
+    text-align:center;
+
+}
+
+/* ==========================================
+   COLLECTOR UPGRADE FX (v4.12)
+   Applied by AnimationManager.playCollectorUpgradeFx() to the
+   whole .collector cell (not #collector-art-N itself) once
+   CollectorManager's own progression actually changes a level -
+   deliberately a DIFFERENT element than the one .pearl-fx-impact
+   already targets, so the two can never fight over the shared
+   `animation` CSS property; they play independently on the same
+   Pearl. z-index only applies while one of these classes is
+   present, so an upgrading collector briefly renders above its
+   idle neighbors in the gapless 5-column grid instead of its
+   pulse looking clipped underneath them.
+========================================== */
+
+.collector-upgrade-fx,
+.collector-upgrade-fx-complete,
+.collector-reset-fx,
+.collector-max-glow{
+
+    z-index:5;
+
+}
+
+/* The actual pulse (transform/filter) is applied to the
+   .collector-art-wrap descendant, not to .collector itself -
+   see the COLLECTOR ART WRAP comment above. Applying it here on
+   the parent would also composite-and-brighten .collector-overlay,
+   which sits behind the art in the same subtree. */
+
+/* 0/3->1/3 and 1/3->2/3. */
+.collector-upgrade-fx .collector-art-wrap{
+
+    animation:collectorUpgradeFx 500ms ease-in-out;
+
+}
+
+@keyframes collectorUpgradeFx{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:
+            drop-shadow(0 0 0 rgba(255,230,160,0))
+            drop-shadow(0 0 0 rgba(255,200,110,0))
+            brightness(1);
+    }
+
+    45%{
+        transform:scale(1.07);
+        filter:
+            drop-shadow(0 0 22px rgba(255,230,160,1))
+            drop-shadow(0 0 40px rgba(255,200,110,.7))
+            brightness(1.2);
+    }
+
+}
+
+/* 2/3->3/3 - visually stronger than the normal upgrade above,
+   but still just a completion pulse (no feature-trigger look). */
+.collector-upgrade-fx-complete .collector-art-wrap{
+
+    animation:collectorUpgradeFxComplete 650ms ease-in-out;
+
+}
+
+@keyframes collectorUpgradeFxComplete{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:
+            drop-shadow(0 0 0 rgba(255,235,180,0))
+            drop-shadow(0 0 0 rgba(255,190,90,0))
+            brightness(1);
+    }
+
+    35%{
+        transform:scale(1.12);
+        filter:
+            drop-shadow(0 0 34px rgba(255,235,180,1))
+            drop-shadow(0 0 60px rgba(255,190,90,.85))
+            brightness(1.4);
+    }
+
+    70%{
+        transform:scale(1.05);
+        filter:
+            drop-shadow(0 0 20px rgba(255,225,150,.8))
+            drop-shadow(0 0 34px rgba(255,190,90,.5))
+            brightness(1.15);
+    }
+
+}
+
+/* Sustained "at max stage" glow - AnimationManager.
+   playCollectorUpgradeFx() adds this right after the one-shot
+   completion burst above finishes (never at the same time, so
+   the two never fight over .collector-art-wrap's `animation`
+   property), and it keeps looping for the rest of
+   CollectorManager.autoResetDelay until the collector actually
+   resets. Stronger than the idle look but quieter than the
+   completion burst itself, since this has to hold for ~1.3s+
+   without feeling like it's still "completing". */
+.collector-max-glow .collector-art-wrap{
+
+    animation:collectorMaxGlow 1.2s ease-in-out infinite;
+
+}
+
+@keyframes collectorMaxGlow{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:
+            drop-shadow(0 0 10px rgba(255,225,150,.55))
+            drop-shadow(0 0 18px rgba(255,190,90,.35))
+            brightness(1.05);
+    }
+
+    50%{
+        transform:scale(1.045);
+        filter:
+            drop-shadow(0 0 26px rgba(255,230,160,.95))
+            drop-shadow(0 0 46px rgba(255,195,100,.65))
+            brightness(1.22);
+    }
+
+}
+
+/* 3/3->0/3 (either a new Pearl forcing an immediate reset, or the
+   existing auto-reset timer) - a gentle "settle back to idle" cue,
+   deliberately cooler/quieter than the gold upgrade pulses above
+   so it never reads as another completion or a feature trigger. */
+.collector-reset-fx .collector-art-wrap{
+
+    animation:collectorResetFx 450ms ease-in-out;
+
+}
+
+@keyframes collectorResetFx{
+
+    0%{
+        transform:scale(1.04);
+        filter:drop-shadow(0 0 10px rgba(180,210,255,.6)) brightness(1.05);
+        opacity:1;
+    }
+
+    60%{
+        transform:scale(.97);
+        filter:drop-shadow(0 0 0 rgba(180,210,255,0)) brightness(1);
+        opacity:.85;
+    }
+
+    100%{
+        transform:scale(1);
+        filter:drop-shadow(0 0 0 rgba(180,210,255,0)) brightness(1);
+        opacity:1;
+    }
+
+}
+
+/* ==========================================
+   PICK BONUS (Milestone - Pick Bonus)
+   Reel Panel/Collector Panel are hidden (never destroyed) via the
+   .pick-bonus-hidden class below, toggled by PickBonusFeature.
+   setSceneActive() - #collector-panel's own top:800px is never
+   touched, only display. #mermaid-panel itself needs NO Pick-Bonus-
+   specific size override anymore - its own base rule (see the
+   MERMAID PANEL section above) is already the full 750x1260 box used
+   everywhere (Base Game/Free Spins/Pick Bonus/Lucky Wheel later), per
+   explicit request.
+========================================== */
+
+#reel-panel.pick-bonus-hidden,
+#collector-panel.pick-bonus-hidden{
+
+    display:none;
+
+}
+
+/* Above #collector-panel's own z-index:2 - the grid/counter must
+   render in front of the (soon-hidden) collectors/reels, and in
+   front of the extended Mermaid artwork behind it. Never shown at
+   the same time as #button-panel overlaps it - the grid's own
+   bottom edge (680+750=1430px) stops exactly at the Button Panel's
+   top edge, so their relative stacking never actually matters. */
+#pick-bonus-panel{
+
+    display:none;
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:3;
+
+    pointer-events:none;
+
+}
+
+#pick-bonus-panel.active{
+
+    display:block;
+
+}
+
+/* ---------- Pick Counter ---------- */
+
+#pick-bonus-counter{
+
+    position:absolute;
+
+    left:50%;
+    top:580px;
+
+    transform:translateX(-50%);
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    gap:8px;
+
+    padding:14px 32px;
+
+    background:rgba(10,20,35,.82);
+
+    border:2px solid rgba(255,215,140,.85);
+    border-radius:14px;
+
+    pointer-events:none;
+
+}
+
+.pick-bonus-counter-title{
+
+    font-family:var(--font-fantasy);
+    font-size:22px;
+    font-weight:bold;
+
+    letter-spacing:1.5px;
+
+    color:#ffe6a0;
+
+    white-space:nowrap;
+
+}
+
+#pick-bonus-pearls{
+
+    display:flex;
+
+    gap:8px;
+
+    justify-content:center;
+    align-items:center;
+
+    min-height:32px;
+
+}
+
+.pick-bonus-pearl-icon{
+
+    width:28px;
+    height:28px;
+
+    object-fit:contain;
+
+}
+
+/* ---------- Speech Bubble ----------
+   Shown from the moment the intro popup ends (PickBonusFeature.
+   beginIntroTransition()) until the player's first selection
+   (onCellClick()) - "Pick any 3", classic comic speech-bubble shape
+   (cream fill, dark outline, a small triangular tail pointing LEFT
+   toward the Mermaid's own face) positioned on the right side of her,
+   clear of both the Pick Counter above the grid and the grid itself
+   below. Hidden by default (no layout reserved) - .active toggles it
+   on/off, never removed/re-added from the DOM. */
+#pick-bonus-speech-bubble{
+
+    display:none;
+
+    position:absolute;
+
+    left:480px;
+    top:230px;
+
+    max-width:260px;
+
+    padding:16px 24px;
+
+    background:#fdf6e3;
+
+    border:3px solid #2a2a2a;
+    border-radius:22px;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+
+    pointer-events:none;
+
+}
+
+#pick-bonus-speech-bubble.active{
+
+    display:block;
+
+    animation:pickBonusSpeechBubblePop 250ms ease-out;
+
+}
+
+@keyframes pickBonusSpeechBubblePop{
+
+    0%{
+        transform:scale(.7);
+        opacity:0;
+    }
+
+    100%{
+        transform:scale(1);
+        opacity:1;
+    }
+
+}
+
+/* Tail - two stacked triangles (outline color behind, fill color in
+   front, the front one 1px smaller all round) pointing left, attached
+   to the bubble's own left edge. */
+#pick-bonus-speech-bubble::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:-16px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    border-width:11px 16px 11px 0;
+    border-style:solid;
+    border-color:transparent #2a2a2a transparent transparent;
+
+}
+
+#pick-bonus-speech-bubble::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:-12px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    z-index:1;
+
+    border-width:9px 13px 9px 0;
+    border-style:solid;
+    border-color:transparent #fdf6e3 transparent transparent;
+
+}
+
+#pick-bonus-speech-bubble-text{
+
+    position:relative;
+
+    z-index:2;
+
+    font-family:var(--font-fantasy);
+    font-weight:800;
+    font-size:26px;
+
+    color:#2a2a2a;
+
+    text-align:center;
+    white-space:nowrap;
+
+}
+
+/* ---------- 3x3 Grid ----------
+   750x750 (3x250px cells), centered horizontally (left:25px, same as
+   #collector-panel), bottom edge flush with the Button Panel's own
+   top edge (680+750=1430px) - per this milestone's own exact layout
+   spec. A pure gameplay layer, not a table - no cell borders/
+   outlines/background boxes anywhere in this section. */
+/* Semi-transparent backdrop behind the 3x3 grid only (same exact
+   750x750/left:25/top:680 box as #pick-bonus-grid below, appended
+   BEFORE it in DOM order so plain stacking paints it underneath) -
+   sits between the extended Mermaid artwork and the creatures/prize
+   text, helping them read clearly against whatever's behind them
+   without covering the Mermaid area outside the grid itself. */
+#pick-bonus-grid-overlay{
+
+    position:absolute;
+
+    left:25px;
+    top:680px;
+
+    width:750px;
+    height:750px;
+
+    background:rgba(0, 0, 0, .4);
+
+    pointer-events:none;
+
+}
+
+#pick-bonus-grid{
+
+    position:absolute;
+
+    left:25px;
+    top:680px;
+
+    width:750px;
+    height:750px;
+
+    display:grid;
+
+    grid-template-columns:repeat(3, 250px);
+    grid-template-rows:repeat(3, 250px);
+
+}
+
+.pick-cell{
+
+    position:relative;
+
+    width:250px;
+    height:250px;
+
+    pointer-events:auto;
+
+    cursor:pointer;
+
+}
+
+.pick-cell.revealed{
+
+    cursor:default;
+
+}
+
+.pick-cell-v1,
+.pick-cell-v2{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+    pointer-events:none;
+
+}
+
+/* Layering per this milestone's exact spec: TOP V1, MIDDLE prize,
+   BOTTOM V2. */
+.pick-cell-v1{
+
+    z-index:3;
+
+}
+
+.pick-cell-prize{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%, -50%);
+
+    z-index:2;
+
+    opacity:0;
+
+    text-align:center;
+
+    font-family:var(--font-fantasy);
+    font-weight:800;
+    font-size:64px;
+
+    white-space:nowrap;
+
+    pointer-events:none;
+
+    /* Same 4-directional black outline + glow treatment as the
+       Bubble Bonus bubble/zap text (ui.css) - keeps the prize
+       readable against any creature/Mermaid artwork behind it
+       without a rectangular UI box. */
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0 0 8px rgba(0,0,0,.85);
+
+    -webkit-text-stroke: 1px #070707;
+
+}
+
+.pick-cell.revealed .pick-cell-prize{
+
+    opacity:1;
+
+}
+
+/* Prize category colors match Bubble Bonus's own bubble/zap colors
+   exactly, so the same reward category reads as the same color
+   everywhere in the game. */
+.pick-cell-prize.cash{ color:#fff8cf; }
+.pick-cell-prize.multiplier{ color:#1df900; }
+
+.pick-cell-prize.jackpot{
+
+    color:#fcfc04;
+    font-size:48px;
+
+}
+
+.pick-cell-v2{
+
+    z-index:1;
+
+    opacity:0;
+
+}
+
+.pick-cell.revealed .pick-cell-v2{
+
+    opacity:1;
+
+}
+
+/* V1 creature's own "swim away" exit - plays the instant a cell is
+   revealed, uncovering the (already-instantly-placed) prize/V2
+   beneath it rather than the V1 creature simply vanishing. */
+.pick-cell.revealed .pick-cell-v1{
+
+    animation:pickCellSwimAway 800ms ease-in forwards;
+
+}
+
+@keyframes pickCellSwimAway{
+
+    0%{
+        transform:translate(0, 0) scale(1);
+        opacity:1;
+    }
+
+    100%{
+        transform:translate(46px, -170px) scale(.55);
+        opacity:0;
+    }
+
+}
+
+/* ==========================================
+   PICK BONUS - IDLE/REVEAL PULSE
+   Toggled entirely by PickBonusFeature (never a fixed-duration CSS-
+   only effect) - .pick-cell-idle-pulse is added to every UNREVEALED
+   cell's own V1 creature the instant the grid becomes pickable
+   (buildGrid()), and removed the instant that specific cell is
+   revealed (revealCell()) OR once no more picks remain at all
+   (stopIdlePulse(), called from checkForResolution()) - whichever
+   comes first. .reveal-pulse is added to the CELL ROOT for a single
+   brief flash the instant ANY cell reveals (a normal player pick in
+   onCellClick()/revealCell(), or a Mermaid's Blessing zap in
+   runNextBlessingZap() - both funnel through the SAME revealCell(),
+   so neither needs its own separate trigger here), then removed after
+   PICK_BONUS_REVEAL_PULSE_MS so the prize settles back to the
+   original static look (no glow/pulse) - matching the previous
+   implementation exactly once the flash ends.
+========================================== */
+
+.pick-cell-idle-pulse{
+
+    animation:pickCellIdlePulse 1400ms ease-in-out infinite;
+
+}
+
+@keyframes pickCellIdlePulse{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:drop-shadow(0 0 0 rgba(255,235,160,0));
+    }
+
+    50%{
+        transform:scale(1.035);
+        filter:drop-shadow(0 0 12px rgba(255,235,160,.5));
+    }
+
+}
+
+.pick-cell.reveal-pulse .pick-cell-v2{
+
+    animation:pickCellRevealPulseImg 600ms ease-out 1;
+
+}
+
+@keyframes pickCellRevealPulseImg{
+
+    0%{
+        transform:scale(.85);
+        filter:drop-shadow(0 0 0 rgba(255,246,200,0));
+    }
+
+    45%{
+        transform:scale(1.18);
+        filter:drop-shadow(0 0 26px rgba(255,246,200,.95));
+    }
+
+    100%{
+        transform:scale(1);
+        filter:drop-shadow(0 0 0 rgba(255,246,200,0));
+    }
+
+}
+
+/* .pick-cell-prize's own base rule already centers it via
+   transform:translate(-50%,-50%) - baked into every keyframe step
+   here too so the pulse never knocks it off-center. */
+.pick-cell.reveal-pulse .pick-cell-prize{
+
+    animation:pickCellRevealPulseText 600ms ease-out 1;
+
+}
+
+@keyframes pickCellRevealPulseText{
+
+    0%{
+        transform:translate(-50%, -50%) scale(.8);
+        filter:drop-shadow(0 0 0 rgba(255,246,200,0));
+    }
+
+    45%{
+        transform:translate(-50%, -50%) scale(1.22);
+        filter:drop-shadow(0 0 22px rgba(255,246,200,.95));
+    }
+
+    100%{
+        transform:translate(-50%, -50%) scale(1);
+        filter:drop-shadow(0 0 0 rgba(255,246,200,0));
+    }
+
+}
+
+/* ==========================================
+   LUCKY WHEEL (Milestone - Lucky Wheel)
+   Reel Panel/Collector Panel are hidden (never destroyed) via the
+   .lucky-wheel-hidden class below, toggled by LuckyWheelFeature.
+   setSceneActive() - same pattern .pick-bonus-hidden above already
+   established, a separate class so the two features never share (and
+   can never accidentally clash over) the same toggle. #mermaid-panel
+   stays fully untouched/visible throughout - no size/position
+   override, no debug outline, per explicit instruction not to
+   extend/resize it again.
+========================================== */
+
+#reel-panel.lucky-wheel-hidden,
+#collector-panel.lucky-wheel-hidden{
+
+    display:none;
+
+}
+
+/* Above #collector-panel's own z-index:2 (matching #pick-bonus-panel's
+   own z-index:3 exactly) - the wheels render in front of the (soon-
+   hidden) collectors/reels and in front of the Mermaid behind them.
+   pointer-events:none - Lucky Wheel has no player interaction, every
+   spin runs automatically (same as Free Spins' own automatic spins),
+   matching #pick-bonus-panel's structural pattern otherwise. */
+#lucky-wheel-panel{
+
+    display:none;
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:3;
+
+    pointer-events:none;
+
+}
+
+#lucky-wheel-panel.active{
+
+    display:block;
+
+}
+
+/* Each wheel is a full LW_WHEEL_DIAMETER (640px) circle rotating
+   inside a HALF-size clip window with overflow:hidden - only that
+   half is ever visible, the rest of the circle extends outside the
+   clip (and, for Bronze/Silver, outside the 800px-wide game canvas
+   itself) intentionally. Geometry below is kept in exact sync with
+   the matching LW_* constants at the top of luckyWheelFeature.js -
+   change one, change the other. */
+
+.lw-wheel-clip{
+
+    position:absolute;
+
+    overflow:hidden;
+
+    filter:drop-shadow(0 4px 14px rgba(0,0,0,.55));
+
+}
+
+.lw-wheel-rotate{
+
+    position:absolute;
+
+    width:640px;
+    height:640px;
+
+}
+
+.lw-wheel-img{
+
+    display:block;
+
+    width:100%;
+    height:100%;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+}
+
+.lw-wheel-segments{
+
+    position:absolute;
+
+    inset:0;
+
+}
+
+/* Prize text tilts WITH its own segment and turns WITH the wheel as
+   it spins - per explicit request, it never counter-rotates/stays
+   screen-relative. Position and orientation still live in two nested
+   elements (LuckyWheelFeature.buildSegmentLabels()):
+
+   .lw-wheel-segments (rotates WITH the wheel - a plain child of
+   .lw-wheel-rotate)
+     .lw-segment-position (the SPOKE - a 0-size anchor point exactly
+     at the wheel's own true center, rotated to this segment's own
+     angle: rotate(segmentAngle). STATIC once built, never touched
+     again - it already inherits the wheel's own live rotation for
+     free simply by being a descendant of .lw-wheel-rotate)
+       .lw-segment-label (the TEXT - carries NO rotation of its own
+       beyond the fixed per-wheel LW_LABEL_ROTATION_OFFSET, plus
+       translate(-50%,-100%) translateY(-LW_LABEL_GAP), which anchors
+       its own bottom edge exactly at the spoke's origin point then
+       pushes it further out along that same spoke, leaving a clear
+       visible gap over the hub before the text starts)
+         .lw-segment-label-text (the actual glyphs - the ONLY thing
+         that ever scales/glows on a win, see .lw-winner below, kept
+         as its own nested element so that never has to touch/replace
+         the position-critical transform one level up). */
+
+.lw-segment-position{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+}
+
+.lw-segment-label{
+
+    position:absolute;
+
+    left:0;
+    top:0;
+
+    font-weight:800;
+    font-size:44px;
+
+    color:#fff;
+
+    text-align:center;
+
+    white-space:nowrap;
+
+    pointer-events:none;
+
+}
+
+.lw-segment-label-text{
+
+    display:inline-block;
+
+    text-shadow:0 2px 4px rgba(0,0,0,.85);
+
+    transition:transform 300ms ease-out, filter 300ms ease-out;
+
+}
+
+/* Landing glow - a soft blurred highlight over the segment a wheel
+   actually settled on, per explicit request ("when a wheel stops, add
+   a glow around the wheel segment which has been chosen for the
+   win"). Hidden by default, faded in via .lw-active
+   (LuckyWheelFeature.finalizeWheelResult()) the instant that wheel's
+   own spin (or Blessing nudge) finishes. Sized/blurred generously
+   rather than a precise wedge outline - reads as a glow AROUND the
+   segment without needing an exact clip-path traced against the
+   wheel's own art. */
+.lw-segment-glow{
+
+    position:absolute;
+
+    left:0;
+    top:0;
+
+    width:150px;
+    height:230px;
+
+    background:radial-gradient(
+
+        ellipse 70px 150px at 50% 55%,
+        rgba(255,246,200,.65) 0%,
+        rgba(255,246,200,.32) 45%,
+        rgba(255,246,200,0) 78%
+
+    );
+
+    filter:blur(5px);
+
+    opacity:0;
+
+    transition:opacity 350ms ease-out;
+
+    pointer-events:none;
+
+}
+
+.lw-segment-glow.lw-active{
+
+    opacity:1;
+
+}
+
+/* Each word of a multi-word label ("FREE SPIN"/"PICK BONUS" - see
+   buildSegmentLabels(), luckyWheelFeature.js) is its own block-level
+   line, line-height:1 (no extra font-metric leading) so the 2px gap
+   below is the ONLY space between them, exact and font-independent -
+   single-word labels are just one line, entirely unaffected. */
+.lw-segment-label-line{
+
+    display:block;
+
+    line-height:1;
+
+}
+
+/* Matches LW_LABEL_LINE_GAP in luckyWheelFeature.js - keep both in
+   sync if this is ever retuned. */
+.lw-segment-label-line + .lw-segment-label-line{
+
+    margin-top:2px;
+
+}
+
+/* Prize-triggered highlight - LuckyWheelFeature.launchResolutionZap()
+   adds this class to the landed segment's own label for
+   LW_PRIZE_HIGHLIGHT_MS before the value actually zaps off to Total
+   Win, per explicit request ("apply a glow effect and increase its
+   size by 1.5x before banging it up to the win counter"). Scales/
+   glows ONLY the inner .lw-segment-label-text span above, never the
+   outer .lw-segment-label - that one's own transform is load-bearing
+   for the label's position/spoke tilt and must never be touched. */
+.lw-segment-label.lw-winner .lw-segment-label-text{
+
+    transform:scale(1.5);
+
+    filter:
+        drop-shadow(0 0 10px rgba(255,246,200,.95))
+        drop-shadow(0 0 22px rgba(255,246,200,.75));
+
+}
+
+/* Same reward-category color language .bubble-zap-cash/-multiplier/
+   -jackpot (below, in the RESOLUTION ZAP section) already established
+   - a Cash/Multiplier/Jackpot segment reads the same color the whole
+   way from the wheel through to Total Win. Bonus (Free Spin/Pick
+   Bonus)/Empty are Lucky-Wheel-only categories with their own colors. */
+.lw-segment-label.cash{ color:#fff8cf; }
+.lw-segment-label.multiplier{ color:#1df900; }
+
+/* Jackpot/Bonus text is 25% smaller than the base 44px (ui.css, above)
+   - per explicit request, scoped to just these 2 categories, Cash/
+   Multiplier/Empty stay at the full base size. */
+.lw-segment-label.jackpot{ color:#fca504; font-size:33px; }
+
+/* Bonus is ALSO the only category ever split across 2 lines ("FREE
+   SPIN"/"PICK BONUS") - see .lw-segment-label-line above for the
+   exact 2px inter-line gap. */
+.lw-segment-label.bonus{ color:#ff6fd8; font-size:33px; }
+
+/* EMPTY only ever appears on the Golden wheel - 25% smaller than the
+   base 44px, per explicit request. */
+.lw-segment-label.empty{ color:#8fa0b3; font-size:33px; }
+
+/* ---------- Bronze Wheel (right half visible, along the left
+   edge of the canvas - pointer at the wheel's own 3 o'clock/90deg
+   point, LW_POINTER_ANGLE.BRONZE in luckyWheelFeature.js) ---------- */
+
+#lw-wheel-bronze .lw-wheel-clip{
+
+    left:-60px;
+    top:470px;
+
+    width:320px;
+    height:640px;
+
+}
+
+#lw-wheel-bronze-rotate{
+
+    left:-320px;
+    top:0;
+
+}
+
+.lw-wheel-pointer-bronze{
+
+    position:absolute;
+
+    left:260px;
+    top:790px;
+
+    transform:translateY(-50%);
+
+    width:0;
+    height:0;
+
+    border-top:22px solid transparent;
+    border-bottom:22px solid transparent;
+    border-right:30px solid #cd7f32;
+
+}
+
+/* ---------- Silver Wheel (left half visible, along the right
+   edge of the canvas - pointer at the wheel's own 9 o'clock/270deg
+   point, LW_POINTER_ANGLE.SILVER in luckyWheelFeature.js) ---------- */
+
+#lw-wheel-silver .lw-wheel-clip{
+
+    right:-60px;
+    top:470px;
+
+    width:320px;
+    height:640px;
+
+}
+
+#lw-wheel-silver-rotate{
+
+    left:0;
+    top:0;
+
+}
+
+.lw-wheel-pointer-silver{
+
+    position:absolute;
+
+    left:510px;
+    top:790px;
+
+    transform:translateY(-50%);
+
+    width:0;
+    height:0;
+
+    border-top:22px solid transparent;
+    border-bottom:22px solid transparent;
+    border-left:30px solid #c8ccd4;
+
+}
+
+/* ---------- Golden Wheel (top half visible, along the bottom of
+   the canvas - pointer at the wheel's own 12 o'clock/0deg point,
+   LW_POINTER_ANGLE.GOLDEN in luckyWheelFeature.js) ---------- */
+
+#lw-wheel-golden .lw-wheel-clip{
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    top:1110px;
+
+    width:640px;
+    height:320px;
+
+}
+
+#lw-wheel-golden-rotate{
+
+    left:0;
+    top:0;
+
+}
+
+.lw-wheel-pointer-golden{
+
+    position:absolute;
+
+    left:400px;
+    top:1080px;
+
+    transform:translateX(-50%);
+
+    width:0;
+    height:0;
+
+    border-left:22px solid transparent;
+    border-right:22px solid transparent;
+    border-top:30px solid #ffd700;
+
+}
+
+/* ==========================================
+   YOU WON BOX (Milestone - Pick Bonus/Lucky Wheel resolution rework)
+   Shared by PickBonusFeature/LuckyWheelFeature - hidden by default,
+   toggled via .active by whichever of the two is currently resolving
+   its own rewards. Positioned in the one vertical band both scenes
+   leave clear: below the Top Panel/jackpots (ends ~170px) and above
+   BOTH the Pick Bonus counter (top:580px) and the Bronze/Silver
+   wheels (top:470px) - so it can never overlap the pick grid or the
+   wheels either way, per explicit request. z-index comfortably above
+   both #pick-bonus-panel and #lucky-wheel-panel (each z-index:3).
+========================================== */
+
+#you-won-box{
+
+    position:absolute;
+
+    left:50%;
+    top:450px;
+
+    transform:translateX(-50%);
+
+    width:520px;
+
+    z-index:6;
+
+    display:none;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:16px 28px;
+
+    background:rgba(10,20,35,.88);
+
+    border:2px solid rgba(255,215,140,.9);
+    border-radius:16px;
+
+    box-shadow:
+
+        0 6px 20px rgba(0,0,0,.5),
+        0 0 20px rgba(255,215,140,.3);
+
+    pointer-events:none;
+
+}
+
+#you-won-box.active{
+
+    display:flex;
+
+}
+
+#you-won-box-label{
+
+    font-family:var(--font-fantasy);
+    font-weight:800;
+
+    font-size:24px;
+
+    letter-spacing:4px;
+    text-transform:uppercase;
+
+    color:var(--controlbar-gold, #d9b25c);
+
+    text-shadow:0 2px 4px rgba(0,0,0,.75);
+
+}
+
+#you-won-box-amount{
+
+    font-family:var(--font-fantasy);
+    font-weight:800;
+
+    font-size:44px;
+
+    color:#fff8cf;
+
+    text-shadow:
+
+        0 0 14px rgba(255,246,200,.65),
+        0 2px 4px rgba(0,0,0,.85);
+
+}
+
+/* ==========================================
+   REEL PANEL
+========================================== */
+
+#reel-panel{
+
+    position:absolute;
+
+    top:970px;
+    left:0;
+
+    width:800px;
+    height:460px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+/* ==========================================
+   REELS CONTAINER
+========================================== */
+
+#reels-container{
+
+    width:750px;
+    height:450px;
+
+    position:relative;
+
+    background-image:url("../assets/reels/reel-bg.png");
+    background-size:100% 100%;
+    background-position:center;
+    background-repeat:no-repeat;
+
+    display:flex;
+
+    justify-content:space-between;
+
+}
+
+/* ==========================================
+   PAYLINE OVERLAY LAYER (v4.13)
+   Deliberately position:absolute - taken out of #reels-container's
+   own `display:flex` layout, exactly like #reel-frame below.
+   Without this the layer would become a 6th flex item and squeeze
+   the 5 reels apart (a layout shift) instead of sitting invisibly
+   on top of them. inset:0 sizes it to exactly 750x450 - the same
+   5:3 aspect ratio the payline PNGs are themselves authored at
+   (verified: 3000x1800), so object-fit:contain on the images
+   inside needs no letterboxing and nothing is stretched.
+
+   Stacking: this is the FIRST child of #reels-container (see
+   index.html), so plain DOM-order stacking (both this and .reel
+   are z-index:auto) puts it above the container's own reel-bg
+   background (which paints behind ALL children regardless of
+   order) but below every reel's symbols, which come later in DOM
+   order - exactly "above background, below symbols" with zero
+   z-index needed.
+
+   AnimationManager creates/removes .payline-overlay <img>
+   elements inside this layer, one per currently-visible line-win
+   amount - see showLineWinAmount() in animationManager.js.
+========================================== */
+
+#payline-layer{
+
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+
+}
+
+.payline-overlay{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+    pointer-events:none;
+
+}
+
+/* ==========================================
+   REEL FRAME
+   Sits on top of the reel background AND the
+   symbols (last child of #reels-container, no
+   z-index needed - later DOM order already wins
+   ties over the .reel siblings before it).
+   pointer-events:none so it never blocks clicks
+   meant for the reels/spin button beneath it.
+========================================== */
+
+#reel-frame{
+
+    position:absolute;
+
+    inset:0;
+
+    background-image:url("../assets/reels/reel-frame.png");
+    background-size:100% 100%;
+    background-position:center;
+    background-repeat:no-repeat;
+
+    pointer-events:none;
+
+}
+
+/* ==========================================
+   SINGLE REEL
+========================================== */
+
+.reel{
+
+    width:150px;
+    height:450px;
+
+    overflow:hidden;
+
+    position:relative;
+
+    border:0px solid rgba(255,255,255,.25);
+
+}
+
+/* ==========================================
+   SYMBOL
+========================================== */
+
+.symbol{
+
+    width:150px;
+    height:150px;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+}
+
+.symbol img{
+
+    width:140px;
+    height:140px;
+
+    object-fit:contain;
+
+    pointer-events:none;
+
+}
+
+/* ==========================================
+   STICKY WILD (Milestone - Wild Respin)
+   Applied by ReelManager.setStickyWild() to the .symbol container
+   of each of a locked reel's 3 sticky Wild positions, for the
+   entire time that reel is locked - purely a visual marker (a
+   subtle steady glow), never affects layout/sizing. Removed by the
+   same method once the reel is unlocked.
+========================================== */
+
+.symbol.sticky-wild{
+
+    position:relative;
+
+    z-index:2;
+
+    box-shadow:
+
+        inset 0 0 0 3px rgba(255,215,120,.85),
+        0 0 16px rgba(255,200,100,.55);
+
+}
+
+/* ==========================================
+   SYMBOL WIN FX (v4.10)
+   Applied by AnimationManager to the .symbol container of each
+   contributing winning position (never to non-winning symbols,
+   never all 5 payline positions - just the ones the existing
+   WinEvaluator counted). transform + filter only, so the
+   150x150 symbol cell itself never changes size/position - no
+   reel layout shift. Plays once per win presentation; the class
+   is removed by AnimationManager.clearWinEffects() afterward so
+   it can replay cleanly on the next win.
+========================================== */
+
+.symbol-win-fx{
+
+    position:relative;
+
+    z-index:3;
+
+    animation:symbolWinFx 700ms ease-in-out;
+
+}
+
+@keyframes symbolWinFx{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:drop-shadow(0 0 0 rgba(255,230,150,0)) brightness(1);
+    }
+
+    35%{
+        transform:scale(1.06);
+        filter:drop-shadow(0 0 16px rgba(255,225,150,.85)) brightness(1.15);
+    }
+
+    65%{
+        transform:scale(1.03);
+        filter:drop-shadow(0 0 22px rgba(255,225,150,.6)) brightness(1.08);
+    }
+
+}
+
+/* ==========================================
+   LINE WIN AMOUNT (v4.10)
+   Short-lived label AnimationManager positions over a winning
+   line's Reel 3 symbol, using result.amount as-is (no payout
+   recalculation happens here or in JS). Appended to
+   #effects-layer (already position:absolute/pointer-events:none
+   over the whole game), so it never affects reel/symbol layout.
+   top/left are set inline per-label (the symbol's own center,
+   computed from the live DOM); the animation itself only moves
+   the label via transform, matching the existing UI's fantasy
+   font/gold-glow treatment (see #button-panel, --font-fantasy).
+========================================== */
+
+.line-win-amount{
+
+    position:absolute;
+
+    transform:translate(-50%, -50%);
+
+    font-family:var(--font-fantasy);
+    font-size:52px;
+    font-weight:bold;
+
+    color:var(--controlbar-gold-bright);
+
+    text-shadow:
+        0 0 6px rgba(255,225,150,.9),
+        0 0 14px rgba(255,200,80,.7),
+        0 2px 3px rgba(0,0,0,.8);
+
+    white-space:nowrap;
+
+    pointer-events:none;
+
+    /* 650ms base, +30% - kept in sync with LINE_WIN_DISPLAY_MS
+       in animationManager.js. */
+    animation:lineWinAmountPop 845ms ease-out forwards;
+
+}
+
+@keyframes lineWinAmountPop{
+
+    0%{
+        opacity:0;
+        transform:translate(-50%, -35%) scale(.7);
+    }
+
+    20%{
+        opacity:1;
+        transform:translate(-50%, -70%) scale(1.08);
+    }
+
+    35%{
+        opacity:1;
+        transform:translate(-50%, -65%) scale(1);
+    }
+
+    80%{
+        opacity:1;
+        transform:translate(-50%, -65%) scale(1);
+    }
+
+    100%{
+        opacity:0;
+        transform:translate(-50%, -85%) scale(.95);
+    }
+
+}
+
+/* ==========================================
+   PEARL COLLECTION FX
+   Three independent pieces, all driven by AnimationManager:
+
+   .pearl-fx-highlight - Phase 1, applied briefly to the actual
+   .symbol container the Pearl landed in (same element
+   .symbol-win-fx targets). A Pearl can never itself be part of
+   a winning count - WinEvaluator always breaks its run on a
+   Pearl (see winEvaluator.js) - so this and .symbol-win-fx
+   cannot actually land on the same element at once; kept as
+   separate classes anyway for clarity.
+
+   .pearl-fx-clone - Phase 2, a temporary <img> appended to
+   #pearl-fx-layer (never the real reel symbol, which stays
+   under ReelManager's control throughout). Travels from the
+   Pearl's real screen position to its collector's real screen
+   position using a per-element --dx/--dy custom property pair
+   (the actual distance differs per reel/row/collector, so the
+   shared @keyframes below reads it back out rather than
+   hardcoding a distance).
+
+   .pearl-fx-impact - Phase 3, applied briefly to the destination
+   collector's own artwork (#collector-art-N) once the clone
+   arrives.
+========================================== */
+
+.pearl-fx-highlight{
+
+    position:relative;
+
+    z-index:3;
+
+    animation:pearlFxHighlight 220ms ease-in-out;
+
+}
+
+@keyframes pearlFxHighlight{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:drop-shadow(0 0 0 rgba(190,225,255,0));
+    }
+
+    50%{
+        transform:scale(1.1);
+        filter:drop-shadow(0 0 14px rgba(200,230,255,.9)) brightness(1.2);
+    }
+
+}
+
+.pearl-fx-clone{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    object-fit:contain;
+
+    pointer-events:none;
+
+    will-change:transform, opacity;
+
+    /* --dx/--dy/--pearl-travel-duration are set inline per
+       clone by AnimationManager - defaults here only cover the
+       (never-expected) case of the class appearing without them. */
+    animation:pearlFxTravel var(--pearl-travel-duration, 450ms) cubic-bezier(.4, 0, .2, 1) forwards;
+
+}
+
+@keyframes pearlFxTravel{
+
+    0%{
+        transform:translate(0, 0) scale(1);
+        opacity:1;
+    }
+
+    15%{
+        transform:translate(0, 0) scale(1.1);
+        opacity:1;
+    }
+
+    60%{
+        transform:
+            translate(
+                calc(var(--dx) * .6),
+                calc(var(--dy) * .6 - 22px)
+            )
+            scale(.8);
+        opacity:1;
+    }
+
+    100%{
+        transform:translate(var(--dx), var(--dy)) scale(.3);
+        opacity:0;
+    }
+
+}
+
+/* ==========================================
+   MERMAID PEARL ZAP GLOW (Wild Respin - Mermaid's
+   Blessing)
+   Modifier on .pearl-fx-clone, applied only to the Pearl
+   AnimationManager.presentMermaidPearlZap() sends toward the
+   secondary Collector - a magical/glowing variant, distinct from a
+   normal Pearl Collection clone. Re-declares BOTH animations
+   together (setting `animation` again replaces the base rule's
+   value entirely, it doesn't merge) - pearlFxTravel still drives
+   the same travel/scale/opacity as any other pearl clone, and
+   mermaidPearlGlow runs alongside it purely on `filter`, so the two
+   never fight over the same property.
+========================================== */
+
+.pearl-fx-clone.mermaid-pearl-zap{
+
+    animation:
+
+        pearlFxTravel var(--pearl-travel-duration, 450ms) cubic-bezier(.4, 0, .2, 1) forwards,
+        mermaidPearlGlow 350ms ease-in-out infinite;
+
+}
+
+@keyframes mermaidPearlGlow{
+
+    0%, 100%{
+        filter:
+            drop-shadow(0 0 8px rgba(170,225,255,.75))
+            drop-shadow(0 0 16px rgba(130,205,255,.5));
+    }
+
+    50%{
+        filter:
+            drop-shadow(0 0 18px rgba(210,240,255,1))
+            drop-shadow(0 0 32px rgba(150,215,255,.8));
+    }
+
+}
+
+.pearl-fx-impact{
+
+    animation:pearlFxImpact 220ms ease-in-out;
+
+}
+
+@keyframes pearlFxImpact{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:drop-shadow(0 0 0 rgba(200,230,255,0)) brightness(1);
+    }
+
+    45%{
+        transform:scale(1.08);
+        filter:drop-shadow(0 0 18px rgba(200,230,255,.9)) brightness(1.2);
+    }
+
+}
+
+/* ==========================================
+   BUTTON PANEL
+========================================== */
+
+#button-panel{
+
+    position:absolute;
+
+    left:0;
+    bottom:0;
+
+    width:800px;
+    height:170px;
+
+    /* Bug fix - .feature-intro-popup (ui.css, #effects-layer,
+       z-index:200) pulses via transform:scale() during its intro
+       animation, which grows slightly past its own 1430px bottom
+       edge at peak scale - without this, that overflow was visibly
+       spilling onto the button bar instead of being masked by it.
+       Comfortably above #effects-layer's 200, but well below
+       #pearl-fx-layer's 400 (game.css) - the Bubble Bonus zap trail
+       still needs to render OVER this panel to visibly land on
+       #total-win-value, and #pearl-fx-layer being a sibling of
+       #viewport (a totally separate stacking context, see its own
+       comment in game.css) is unaffected by this either way. */
+    z-index:210;
+
+    display:grid;
+
+    grid-template-columns:150px 250px 250px 150px;
+    grid-template-rows:80px 80px;
+
+    gap:10px 0;
+
+    justify-content:center;
+    align-content:center;
+
+    font-family:var(--font-fantasy);
+
+    /* Underwater/gold control bar backdrop (v4.8). PNG layer
+       first, gradient second - same graceful-fallback pattern
+       as #background-layer in game.css: a missing
+       panel-bg.png simply doesn't paint that layer and the
+       gradient underneath carries the look on its own, so
+       dropping the asset in later is optional, not required. */
+    background-image:
+        url("../assets/buttons/panel-bg.png"),
+        linear-gradient(
+            180deg,
+            var(--controlbar-navy-light) 0%,
+            var(--controlbar-navy) 55%,
+            var(--controlbar-navy-deep) 100%
+        );
+
+    background-size:cover, cover;
+    background-position:center, center;
+    background-repeat:no-repeat, no-repeat;
+
+    border-top:2px solid var(--controlbar-gold);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.15),
+        0 -6px 16px rgba(0,0,0,.35);
+
+}
+
+/* Small pearl accents along the bar's top seam - purely
+   decorative, pointer-events left alone since these sit
+   outside any clickable element's box. */
+#button-panel::before,
+#button-panel::after{
+
+    content:"";
+
+    position:absolute;
+
+    top:-5px;
+
+    width:10px;
+    height:10px;
+
+    border-radius:50%;
+
+    background:radial-gradient(
+        circle at 35% 30%,
+        #ffffff,
+        var(--controlbar-gold-bright) 45%,
+        var(--controlbar-gold-dark) 100%
+    );
+
+    box-shadow:0 1px 3px rgba(0,0,0,.5);
+
+}
+
+#button-panel::before{ left:170px; }
+#button-panel::after{ left:630px; }
+
+/* ---------- Common ---------- */
+
+#button-panel button,
+#total-win,
+#balance{
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    border:1px solid var(--controlbar-gold);
+
+    border-radius:16px;
+
+    background:linear-gradient(
+        180deg,
+        var(--controlbar-navy-light) 0%,
+        var(--controlbar-navy-deep) 100%
+    );
+
+    color:var(--controlbar-pearl);
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    letter-spacing:.5px;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.2),
+        inset 0 -1px 4px rgba(0,0,0,.4);
+
+}
+
+#bet{
+
+    border:1px solid var(--controlbar-gold);
+
+    border-radius:16px;
+
+    background:linear-gradient(
+        180deg,
+        var(--controlbar-navy-light) 0%,
+        var(--controlbar-navy-deep) 100%
+    );
+
+    color:var(--controlbar-pearl);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.2),
+        inset 0 -1px 4px rgba(0,0,0,.4);
+
+}
+
+/* ---------- Grid ---------- */
+
+#audio-button{
+
+    grid-column:1;
+    grid-row:1;
+
+}
+
+#info-button{
+
+    grid-column:1;
+    grid-row:2;
+
+}
+
+/* ---------- Audio / Info icon layout (v4.8) ----------
+   flex-direction:column stacks the icon above each button's
+   existing text node. Info keeps its CSS-drawn ::before glyph
+   circle; Audio uses a real <img id="audio-icon"> (see below)
+   since its two states are real generated PNG assets
+   (assets/buttons/audio-on.png / audio-off.png), swapped by
+   AudioManager.updateUI() in js/audioManager.js - not baked
+   into this background artwork. */
+#audio-button,
+#info-button{
+
+    flex-direction:column;
+
+    gap:4px;
+
+    font-size:12px;
+
+    letter-spacing:1px;
+
+}
+
+#info-button::before{
+
+    content:"i";
+
+    font-style:italic;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    width:32px;
+    height:32px;
+
+    border-radius:50%;
+
+    border:1px solid var(--controlbar-gold);
+
+    background:radial-gradient(
+        circle at 35% 30%,
+        var(--controlbar-navy-light),
+        var(--controlbar-navy-deep)
+    );
+
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.3);
+
+    font-family:Arial, sans-serif;
+    font-size:15px;
+    font-weight:bold;
+
+    color:var(--controlbar-gold-bright);
+
+}
+
+/* The PNG already contains its own navy/gold circular badge
+   (matching the ::before circle above at the same 32x32
+   display size) - see assets/buttons/audio-on.png /
+   audio-off.png - so this only needs to size it, not
+   decorate it again. */
+.audio-icon{
+
+    width:32px;
+    height:32px;
+
+    object-fit:contain;
+
+    pointer-events:none;
+
+}
+
+/* ==========================================
+   TOTAL WIN PANEL
+========================================== */
+
+#total-win{
+
+    grid-column:2 / span 2;
+    grid-row:1;
+
+    position:relative;
+
+}
+
+/* ==========================================
+   BALANCE PANEL
+========================================== */
+
+#balance{
+
+    grid-column:2;
+    grid-row:2;
+
+    position:relative;
+
+}
+
+/* ==========================================
+   PANEL TITLES
+========================================== */
+
+#total-win .panel-title,
+#balance .panel-title{
+
+    position:absolute;
+
+    top:8px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    letter-spacing:1.5px;
+
+    color:var(--controlbar-gold-bright);
+
+}
+
+/* ==========================================
+   PANEL VALUES
+========================================== */
+
+#total-win-value,
+#balance-value{
+
+    position:absolute;
+
+    left:50%;
+
+    bottom:5px;
+
+    transform:translateX(-50%);
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    color:var(--controlbar-pearl);
+
+    text-shadow:0 1px 2px rgba(0,0,0,.6);
+
+}
+
+#bet{
+
+    grid-column:3;
+    grid-row:2;
+
+    position:relative;
+
+}
+
+/* ==========================================
+   BET PANEL
+========================================== */
+
+#bet .panel-title{
+
+    position:absolute;
+
+    top:8px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    letter-spacing:1.5px;
+
+    color:var(--controlbar-gold-bright);
+
+}
+
+#bet-value{
+
+    position:absolute;
+
+    left:50%;
+
+    bottom:5px;
+
+    transform:translateX(-50%);
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    color:var(--controlbar-pearl);
+
+    text-shadow:0 1px 2px rgba(0,0,0,.6);
+
+}
+
+#bet-minus,
+#bet-plus{
+
+    position:absolute;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    width:32px;
+
+    height:32px;
+
+    border-radius:50% !important;
+
+    font-size:18px;
+
+    background:radial-gradient(
+        circle at 35% 30%,
+        var(--controlbar-navy-light),
+        var(--controlbar-navy-deep)
+    ) !important;
+
+}
+
+#bet-minus{
+
+    left:14px;
+
+}
+
+#bet-plus{
+
+    right:14px;
+
+}
+
+/* Mobile touch-target minimum (~44x44px) - visual button stays
+   32x32px (unchanged), this pseudo-element only extends the actual
+   tappable/hit area by 6px on every side (32+6+6=44). Positioned
+   relative to the button itself since #bet-minus/#bet-plus are
+   already position:absolute (a non-static generating element is the
+   pseudo-element's own containing block), so inset applies directly
+   against the button's own box, not #bet's. */
+#bet-minus::before,
+#bet-plus::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:-6px;
+
+}
+
+/* Milestone - Free Spins. BetManager.setLocked(true) sets the
+   native `disabled` attribute (stops click events firing at all)
+   while a Bonus Feature is active - this is the visual companion,
+   matching #spin-button:disabled below. */
+#bet-minus:disabled,
+#bet-plus:disabled{
+
+    opacity:.5;
+
+    cursor:not-allowed;
+
+}
+
+/* ==========================================
+   SPIN BUTTON
+========================================== */
+
+#spin-button{
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    grid-column:4;
+    grid-row:1 / span 2;
+
+    position:relative;
+
+    background:transparent !important;
+
+    border:none !important;
+
+    padding:0;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+/* Gold ring + glow behind the spin.png artwork, so the
+   button already reads as a premium circular control even
+   before assets/buttons/spin.png is dropped in (a missing
+   img just shows broken-image chrome inside this ring). */
+#spin-button::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:150px;
+    height:150px;
+
+    border-radius:50%;
+
+    background:radial-gradient(
+        circle at 35% 30%,
+        var(--controlbar-navy-light),
+        var(--controlbar-navy-deep) 70%
+    );
+
+    border:3px solid var(--controlbar-gold);
+
+    box-shadow:
+        0 0 0 4px var(--controlbar-navy-deep),
+        0 0 18px rgba(255,215,120,.45),
+        inset 0 2px 4px rgba(255,255,255,.25);
+
+    transition:box-shadow .2s;
+
+}
+
+#spin-button img{
+
+    position:relative;
+
+    width:150px;
+    height:150px;
+
+    object-fit:contain;
+
+    pointer-events:none;
+
+}
+
+#spin-button:hover{
+
+    filter:brightness(1.1);
+
+}
+
+#spin-button:hover::before{
+
+    box-shadow:
+        0 0 0 4px var(--controlbar-navy-deep),
+        0 0 28px rgba(255,225,150,.65),
+        inset 0 2px 4px rgba(255,255,255,.35);
+
+}
+
+#spin-button:active{
+
+    transform:scale(.96);
+
+}
+
+/* Milestone - Collector -> Bonus Feature Framework. SpinManager.
+   setEnabled(false) sets the native `disabled` attribute (which
+   already stops click events from firing at all) while a Feature
+   is active - this is purely the visual companion to that, so a
+   locked Spin button also reads as locked. */
+#spin-button:disabled{
+
+    opacity:.5;
+
+    cursor:not-allowed;
+
+}
+
+/* ==========================================
+   FEATURE PLACEHOLDER (Milestone - Collector -> Bonus
+   Feature Framework)
+   Temporary development placeholder only - FeatureManager shows
+   this inside the existing #popup-layer (position:absolute;
+   inset:0; already covers the full 800x1600 game area, see
+   game.css) while a Collector's routed feature is active. No
+   layout element moves or resizes for this - it is purely an
+   overlay. Replaced by the real per-feature UI in a later
+   milestone.
+========================================== */
+
+.feature-placeholder{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%, -50%);
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    padding:20px 36px;
+
+    background:rgba(10,20,35,.82);
+
+    border:2px solid rgba(255,215,140,.85);
+    border-radius:14px;
+
+    color:#ffe6a0;
+
+    font-weight:bold;
+    text-align:center;
+    white-space:nowrap;
+
+}
+
+/* Feature name - 2x .feature-placeholder-status's font-size below. */
+.feature-placeholder-name{
+
+    font-size:56px;
+
+}
+
+/* "Triggered" - kept at the ORIGINAL single-line placeholder's
+   font-size (28px), unchanged. */
+.feature-placeholder-status{
+
+    font-size:28px;
+
+}
+
+/* ==========================================
+   FEATURE POPUP OVERLAY (Milestone - Bonus Feature intro/outro
+   audio; shared by both the intro popup and the outro popup)
+   Dimming backdrop shown behind EITHER the full-screen intro popup
+   (.feature-intro-popup - AnimationManager.presentFeatureIntroPopup())
+   or the "FEATURE / COMPLETE" outro popup (.feature-outro-popup -
+   presentFeatureCompletionPopup()) - never behind the small "X /
+   Triggered" trigger popup (.feature-placeholder), which stays
+   exactly as-is (no overlay). Both callers append this FIRST, their
+   own popup element SECOND, so plain DOM-order stacking puts the
+   popup on top of the overlay (an overlay "below" a popup at the
+   SAME z-index is a paint-order thing, not a numeric z-index).
+   #button-panel's own z-index:210 (see above) already sits above
+   #effects-layer's 200, so it renders in front of this overlay
+   automatically, no separate rule needed here.
+========================================== */
+
+.feature-popup-overlay{
+
+    position:absolute;
+
+    inset:0;
+
+    background:rgba(0,0,0,.65);
+
+    animation:featurePopupOverlayFadeIn 250ms ease-out forwards;
+
+}
+
+@keyframes featurePopupOverlayFadeIn{
+
+    0%{ opacity:0; }
+    100%{ opacity:1; }
+
+}
+
+/* ==========================================
+   FEATURE OUTRO POPUP (Milestone - Bonus Feature intro/outro audio)
+   Deliberately its OWN dedicated class, NOT a reuse of
+   .feature-placeholder above - the "X / Triggered" intro popup must
+   stay exactly as-is (small, no pulse), while this "FEATURE /
+   COMPLETE" outro popup needs its own bigger/pulsating treatment.
+   Built directly by AnimationManager.presentFeatureCompletionPopup()
+   into the SAME #effects-layer .feature-intro-popup already uses,
+   behind the shared .feature-popup-overlay above.
+========================================== */
+
+/* Same box as .feature-placeholder, everything simply doubled
+   (padding/border/radius) - kept as a fully separate rule rather
+   than a shared base + modifier, so .feature-placeholder itself
+   never has to account for a "2x variant" existing. */
+.feature-outro-popup{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    padding:40px 72px;
+
+    background:rgba(10,20,35,.82);
+
+    border:4px solid rgba(255,215,140,.85);
+    border-radius:28px;
+
+    box-shadow:0 0 32px rgba(255,215,140,.35);
+
+    color:#ffe6a0;
+
+    font-weight:bold;
+    text-align:center;
+    white-space:nowrap;
+
+    /* Base transform matches the FIRST keyframe below exactly - if
+       the pulse animation is ever removed/fails to apply for any
+       reason, the popup still renders correctly centered instead of
+       pinned to its top-left corner. */
+    transform:translate(-50%, -50%) scale(1);
+
+    animation:featureOutroPopupPulse 900ms ease-in-out infinite;
+
+}
+
+/* Every keyframe re-states translate(-50%, -50%) alongside scale() -
+   an animation's `transform` keyframes REPLACE the base rule's value
+   entirely rather than merging with it (the same lesson already
+   applied to .bubble-bonus-intro-popup/.bubble-meter-impact above) -
+   omitting the translate here would make the popup jump to its
+   unscaled top-left corner the instant the pulse starts. */
+@keyframes featureOutroPopupPulse{
+
+    0%, 100%{
+        transform:translate(-50%, -50%) scale(1);
+    }
+
+    50%{
+        transform:translate(-50%, -50%) scale(1.06);
+    }
+
+}
+
+/* "FEATURE" - 2x .feature-placeholder-name's own 56px. */
+.feature-outro-popup-name{
+
+    font-size:112px;
+
+}
+
+/* "COMPLETE" - 2x .feature-placeholder-status's own 28px. */
+.feature-outro-popup-status{
+
+    font-size:56px;
+
+}
+
+/* ==========================================
+   FREE SPINS COUNTER (Milestone - Free Spins)
+   "Spins Left - XX", shown in the SAME position/container styling
+   as .feature-placeholder above (same #popup-layer, same centered
+   placement, background, border, glow, font treatment) - a
+   deliberately separate element/class though, since its lifecycle
+   is completely different: the placeholder is a brief one-shot
+   flash at trigger time (FeatureManager.showPlaceholder()/
+   hidePlaceholder()), while this persists for the Free Spins
+   feature's entire duration and its text updates after every spin
+   (see FreeSpinsFeature.updateCounter()). Never both on screen at
+   once - the placeholder is already hidden before this appears.
+========================================== */
+
+.free-spins-counter{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%, -50%);
+
+    padding:18px 34px;
+
+    background:rgba(10,20,35,.82);
+
+    border:2px solid rgba(255,215,140,.85);
+    border-radius:14px;
+
+    color:#ffe6a0;
+
+    font-size:34px;
+    font-weight:bold;
+    text-align:center;
+    white-space:nowrap;
+
+}
+
+/* Milestone - Free Spins pause/resume. Applied by FreeSpinsFeature.
+   pause() while a higher-priority Feature has interrupted Free
+   Spins (removed again by resume()) - the counter itself stays put
+   and keeps showing the same number the whole time (see
+   FreeSpinsFeature.js), this only recolors the text so it visibly
+   reads as "on hold" rather than actively counting down. Border/
+   background/everything else stays exactly as-is. */
+.free-spins-counter.paused{
+
+    color:#9a9a9a;
+
+}
+
+/* Milestone - Pick Bonus. Applied/removed by FreeSpinsFeature.
+   setCounterTakeoverHidden(), called by a scene-takeover feature
+   (Pick Bonus/Lucky Wheel) at its OWN masked transition midpoint -
+   fully hides the counter for the duration of that takeover, since
+   it has nowhere sensible to show. Never applied for Wild Respin,
+   which has no scene takeover and keeps the counter visible/greyed
+   via .paused above instead. */
+.free-spins-counter.hidden{
+
+    display:none;
+
+}
+
+/* ==========================================
+   FEATURE TRANSITION GLOW (Milestone - Free Spins)
+   Generic "gradually fill the screen with a glow, then remove it"
+   transition - AnimationManager.presentFeatureTransition() appends
+   this into the existing #effects-layer (already the topmost
+   in-game layer, covers the full 800x1600 #game box) and removes
+   it once the animation finishes. Not Free-Spins-specific - the
+   same class/call drives Pick Bonus's/Lucky Wheel's own transition
+   later. 2000ms duration kept in sync with FEATURE_TRANSITION_GLOW_MS
+   in animationManager.js.
+========================================== */
+
+.feature-transition-glow{
+
+    position:absolute;
+
+    inset:0;
+
+    /* Solid fill, not a radial gradient - a "circle" gradient
+       necessarily fades out well before it reaches the corners of
+       a tall 800x1600 rectangle (its 100% stop only touches the
+       farthest corner exactly, everywhere else along each edge is
+       already dimmer), so it read as a spotlight in the middle
+       rather than a full-screen glow. A solid color animated by
+       opacity is the only way to guarantee the ENTIRE screen is
+       uniformly, fully covered at peak - the actual requirement
+       here (the asset swap underneath must be completely hidden,
+       not just softened). */
+    background:rgb(255, 238, 200);
+
+    opacity:0;
+
+    animation:featureTransitionGlow 2000ms ease-in-out forwards;
+
+}
+
+@keyframes featureTransitionGlow{
+
+    0%{ opacity:0; }
+    50%{ opacity:1; }
+    100%{ opacity:0; }
+
+}
+
+/* ==========================================
+   FEATURE INTRO POPUP (Milestone - Free Spins)
+   Generic full-screen (top:0 down to the reel panel's own bottom
+   edge - 970px+460px=1430px, see #reel-panel above - deliberately
+   NEVER over #button-panel below that) artwork popup -
+   AnimationManager.presentFeatureIntroPopup() appends the shared
+   .feature-popup-overlay FIRST then this popup SECOND, into
+   #effects-layer, for a caller-provided duration, then removes both.
+   Not Free-Spins-specific - Pick Bonus already reuses the same
+   class/call with its own image (pb-intro.png), Lucky Wheel later
+   too.
+========================================== */
+
+.feature-intro-popup{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:800px;
+    height:1430px;
+
+    object-fit:cover;
+
+    pointer-events:none;
+
+    /* Gentle pulsate for the whole time the popup is on screen -
+       keeps it feeling alive rather than a static, inert image. */
+    animation:featureIntroPopupPulse 1200ms ease-in-out infinite;
+
+}
+
+@keyframes featureIntroPopupPulse{
+
+    0%, 100%{
+        transform:scale(1);
+        filter:brightness(1);
+    }
+
+    50%{
+        transform:scale(1.03);
+        filter:brightness(1.08);
+    }
+
+}
+
+/* ==========================================
+   WIN CELEBRATION POPUP (Milestone - Win Celebration Popups)
+   Built by AnimationManager.presentWinCelebrationPopup() into the
+   SAME #effects-layer/.feature-popup-overlay the feature intro popup
+   above already uses - identical box (800x1430, object-fit:cover) and
+   pulsate rhythm, reusing featureIntroPopupPulse above rather than a
+   duplicate keyframe. .win-celebration-wrap is the ONE element that
+   actually pulsates (transform:scale) - both its children (the art AND
+   the amount) inherit that single transform for free, so they can
+   never visibly drift out of sync with each other.
+========================================== */
+
+.win-celebration-wrap{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:800px;
+    height:1430px;
+
+    pointer-events:none;
+
+    animation:featureIntroPopupPulse 1200ms ease-in-out infinite;
+
+}
+
+.win-celebration-art{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+}
+
+/* Sits exactly over the golden textbox art already drawn into
+   bigwin.png/superwin.png/megawin.png (all three share the identical
+   layout/box position) - px values pixel-calibrated against that real
+   art at this box's own 800x1430 native size, not a guess. Re-measure
+   these four values the same way if the art is ever replaced with a
+   differently-proportioned template. */
+.win-celebration-amount{
+
+    position:absolute;
+
+    left:90px;
+    top:845px;
+
+    width:630px;
+    height:134px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-family:var(--font-fantasy);
+    font-weight:800;
+    font-size:130px;
+
+    /* Bug fix - a font's default line-box extends unevenly above/
+       below its glyphs (ascent/descent metrics), which visibly threw
+       off true vertical centering inside the gold box once the text
+       got large enough to matter - line-height:1 collapses that box
+       down to the glyphs' own height, so align-items:center above
+       centers the text itself, not an oversized invisible line-box
+       around it. */
+    line-height:1;
+
+    color:#3a1f00;
+
+    text-shadow:0 2px 0 rgba(255,255,255,.35);
+
+    white-space:nowrap;
+
+}
+
+/* ==========================================
+   BUBBLE BONUS (Milestone - Free Spins Mermaid's Blessing /
+   Automatic Bubble Bonus)
+   Two-layer DOM per bubble, appended into the SAME #effects-layer
+   used by the transition glow/intro popup above:
+
+     .bubble-wrap  - position/drift only (a plain translate
+                     animation, see bubbleDrift below).
+     .bubble       - the visual bubble + its OWN independent pop/
+                     escape animation.
+
+   Kept as separate elements specifically so BubbleBonusFeature.
+   popBubble() can freeze the wrapper's drift exactly where it is
+   (animation-play-state:paused) while the inner bubble scales/fades
+   out on its own - a single combined transform would otherwise snap
+   back to the bubble's spawn position the instant a scale-based pop
+   animation replaced the drift animation on the same element.
+========================================== */
+
+/* Shown BEFORE any bubble spawns - see
+   BubbleBonusFeature.showBlessingPopup(). Same container styling
+   language as .free-spins-counter (dark navy box, gold border,
+   centered in #popup-layer) with a cooler glow accent to read as
+   its own distinct "special event" moment, plus a one-shot
+   entrance/settle pulse (not the free-spins-counter's own OTHER
+   animation, this only plays once on arrival). */
+.bubble-bonus-intro-popup{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%, -50%);
+
+    padding:20px 38px;
+
+    background:rgba(10,20,35,.85);
+
+    border:2px solid rgba(170,220,255,.9);
+    border-radius:14px;
+
+    box-shadow:0 0 24px rgba(140,210,255,.55);
+
+    color:#eaf6ff;
+
+    font-size:36px;
+    font-weight:800;
+    text-align:center;
+    white-space:nowrap;
+
+    animation:bubbleBonusIntroPopup 2000ms ease-out forwards;
+
+}
+
+@keyframes bubbleBonusIntroPopup{
+
+    0%{
+        transform:translate(-50%, -50%) scale(.7);
+        opacity:0;
+    }
+
+    18%{
+        transform:translate(-50%, -50%) scale(1.06);
+        opacity:1;
+    }
+
+    28%{
+        transform:translate(-50%, -50%) scale(1);
+        opacity:1;
+    }
+
+    85%{
+        transform:translate(-50%, -50%) scale(1);
+        opacity:1;
+    }
+
+    100%{
+        transform:translate(-50%, -50%) scale(.94);
+        opacity:0;
+    }
+
+}
+
+.bubble-wrap{
+
+    position:absolute;
+
+    pointer-events:none;
+
+    animation-name:bubbleDrift;
+    animation-timing-function:ease-in-out;
+    animation-fill-mode:forwards;
+
+}
+
+@keyframes bubbleDrift{
+
+    0%{
+        transform:translate(0, 0) scale(.85);
+        opacity:0;
+    }
+
+    10%{
+        transform:translate(0, 0) scale(1);
+        opacity:1;
+    }
+
+    100%{
+        transform:translate(var(--bubble-drift-x, 0px), var(--bubble-drift-y, -150px)) scale(1);
+        opacity:1;
+    }
+
+}
+
+.bubble{
+
+    width:108px;
+    height:108px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:4px;
+
+    border-radius:50%;
+
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.9), rgba(150,220,255,.6) 55%, rgba(80,170,230,.4) 100%);
+
+    border:2px solid rgba(255,255,255,.75);
+
+    box-shadow:0 0 14px rgba(140,220,255,.6), inset 0 0 12px rgba(255,255,255,.55);
+
+    color:#0a2a3a;
+
+    /* Text is the whole point of a bubble - sized to use the
+       majority of its own circle rather than sitting small in the
+       middle of it. */
+    font-size:34px;
+    font-weight:800;
+    line-height:1;
+    text-align:center;
+    white-space:nowrap;
+
+    /* Hard 4-directional black outline (readable in EVERY browser,
+       not just the -webkit-text-stroke each category below adds on
+       top for extra reinforcement in Chrome specifically) plus a
+       soft dark glow behind it - guarantees the bright fill color
+       (set per-category below) reads clearly regardless of what's
+       behind the bubble at that moment. */
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0 0 8px rgba(0,0,0,.85);
+
+    transition:opacity 220ms ease-in, transform 220ms ease-in;
+
+}
+
+/* Prize-category accents - the bubble's own text (set at spawn by
+   BubbleBonusFeature.spawnBubble()) is what actually conveys the
+   prize. Text color matches each category's OWN .bubble-zap-*
+   color exactly (see BUBBLE ZAP TRAIL below) - the same reward
+   value should read as the same color the whole way from the
+   bubble to the meter. */
+.bubble-cash{
+    border-color:rgba(140,255,170,.9);
+    box-shadow:0 0 14px rgba(140,255,170,.6), inset 0 0 12px rgba(255,255,255,.55);
+    color:#fff8cf;
+    -webkit-text-stroke: 1px #070707;
+}
+
+.bubble-multiplier{
+    border-color:rgba(255,210,120,.9);
+    box-shadow:0 0 14px rgba(255,210,120,.6), inset 0 0 12px rgba(255,255,255,.55);
+    color:#1df900;
+    -webkit-text-stroke: 1px #070707;
+}
+
+/* Longest possible labels (MINOR/MAJOR/GRAND/MINI) - a smaller size
+   than the other categories, but still as large as it can be while
+   reliably fitting on one line inside the same circle. */
+.bubble-jackpot{
+    border-color:rgba(255,140,220,.9);
+    box-shadow:0 0 14px rgba(255,140,220,.6), inset 0 0 12px rgba(255,255,255,.55);
+    font-size:21px;
+    color:#fca504;
+    -webkit-text-stroke: 1px #070707;
+}
+
+.bubble-additional_spins{
+    border-color:rgba(150,190,255,.9);
+    box-shadow:0 0 14px rgba(150,190,255,.6), inset 0 0 12px rgba(255,255,255,.55);
+    color:#00d9ff;
+    -webkit-text-stroke: 1px #070707;
+}
+
+/* Empty (no-prize) bubble - deliberately dull/washed-out compared to
+   every prize category above (no bright accent color, no text at
+   all - BubbleBonusFeature.spawnEmptyBubble() never sets any
+   textContent), so it visibly reads as "nothing in here" rather than
+   just another prize color the player hasn't learned yet. */
+.bubble-empty{
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.5), rgba(180,190,200,.35) 55%, rgba(120,130,140,.25) 100%);
+    border-color:rgba(200,205,210,.55);
+    box-shadow:0 0 10px rgba(200,205,210,.35), inset 0 0 8px rgba(255,255,255,.3);
+}
+
+/* Popped (Milestone's own explicit pop-vs-escape distinction) - the
+   inner bubble scales up briefly then collapses/fades, independent
+   of the (now-frozen) wrapper's own drift position. */
+.bubble.popping{
+
+    animation:bubblePop 350ms ease-out forwards;
+
+}
+
+@keyframes bubblePop{
+
+    0%{
+        transform:scale(1);
+        opacity:1;
+    }
+
+    55%{
+        transform:scale(1.4);
+        opacity:.85;
+    }
+
+    100%{
+        transform:scale(0);
+        opacity:0;
+    }
+
+}
+
+/* Escaped - simply fades out in place via a plain transition (see
+   .bubble's own transition above), never a reveal/reward. */
+.bubble-wrap.escaping .bubble{
+
+    opacity:0;
+    transform:scale(.6);
+
+}
+
+/* ==========================================
+   BUBBLE ZAP TRAIL (Milestone - Free Spins Mermaid's Blessing /
+   Automatic Bubble Bonus)
+   The exact same travel technique as .pearl-fx-clone/pearlFxTravel
+   above (a clone appended to #pearl-fx-layer, --dx/--dy computed
+   from real getBoundingClientRect() deltas by
+   BubbleBonusFeature.launchZapTrail()) - reused here to carry a
+   popped bubble's own value to its meter (Total Win or the Free
+   Spins counter) instead of a Pearl to a Collector. The label text
+   IS the trail (no separate streak asset) - its own glow plus the
+   fast travel + trailing scale/stretch reads as a "zap" without a
+   second element to keep in sync.
+========================================== */
+
+.bubble-zap-trail{
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    transform:translate(-50%, -50%);
+
+    pointer-events:none;
+
+    /* Bigger than the bubble's own resting text - the value should
+       read as growing/emphasized right as it pops and heads for its
+       meter. */
+    font-size:40px;
+    font-weight:800;
+    white-space:nowrap;
+
+    color:#fdc200;
+
+    /* Bug fix - readability. A hard 4-directional black outline
+       (works in EVERY browser, unlike -webkit-text-stroke alone)
+       FIRST, so it paints on top of/around the glyph edges, then the
+       existing colored glow layered behind it - keeps the "magic
+       zap" glow feel while guaranteeing the value itself stays
+       legible against any background it flies across. */
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0 0 6px rgba(255,255,255,.9),
+         0 0 16px currentColor,
+         0 0 28px currentColor;
+
+    -webkit-text-stroke: 2px #000;
+
+    will-change:transform, opacity;
+
+    animation:bubbleZapTravel var(--zap-duration, 480ms) cubic-bezier(.3, 0, .2, 1) forwards;
+
+}
+
+@keyframes bubbleZapTravel{
+
+    0%{
+        transform:translate(-50%, -50%) translate(0, 0) scale(1.15, 1.15);
+        opacity:1;
+    }
+
+    70%{
+        transform:
+            translate(-50%, -50%)
+            translate(calc(var(--dx) * .85), calc(var(--dy) * .85))
+            scale(1.3, .8);
+        opacity:1;
+    }
+
+    100%{
+        transform:
+            translate(-50%, -50%)
+            translate(var(--dx), var(--dy))
+            scale(.4, .4);
+        opacity:0;
+    }
+
+}
+
+/* Bug fix - these 4 rules used to each be followed by a
+   `-webkit-text-stroke` line sitting OUTSIDE their own {} block
+   (invalid CSS, silently discarded by the browser - this is why
+   the earlier attempt at an outline had no visible effect). The
+   outline itself now lives once on .bubble-zap-trail above and
+   applies to all 4 automatically; these only need their color. */
+.bubble-zap-cash{ color:#fff8cf; }
+
+.bubble-zap-jackpot{ color:#fca504; }
+
+.bubble-zap-multiplier{ color:#1df900; }
+
+.bubble-zap-additional_spins{ color:#00d9ff; }
+
+/* ==========================================
+   BUBBLE METER IMPACT (Milestone - Free Spins Mermaid's Blessing /
+   Automatic Bubble Bonus)
+   Brief flash applied to whichever meter a zap just landed on
+   (#total-win-value or FreeSpinsFeature's own .free-spins-counter) -
+   mirrors the existing .pearl-fx-impact treatment used when a
+   normal Pearl clone reaches its Collector, so the "value arriving"
+   moment reads consistently with that established pattern.
+
+   `filter` only, DELIBERATELY never `transform` - both target
+   elements are centered via their OWN base `transform:translateX/
+   translate(-50%, ...)` rule (see #total-win-value/.free-spins-
+   counter above) - an animation's `transform` keyframes REPLACE the
+   base rule's value entirely for the animation's duration rather
+   than merging with it, which would silently strip that centering
+   offset and visibly shift the meter sideways for the pulse. filter
+   never touches layout/position at all, so this can never do that.
+========================================== */
+
+.bubble-meter-impact{
+
+    animation:bubbleMeterImpact 300ms ease-out;
+
+}
+
+@keyframes bubbleMeterImpact{
+
+    0%{
+        filter:brightness(1) drop-shadow(0 0 0 rgba(255,238,180,0));
+    }
+
+    35%{
+        filter:brightness(1.5) drop-shadow(0 0 16px rgba(255,238,180,.9));
+    }
+
+    100%{
+        filter:brightness(1) drop-shadow(0 0 0 rgba(255,238,180,0));
+    }
+
+}
+
+/* ==========================================
+   REEL STRIP
+========================================== */
+
+.reel-strip{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+
+    transition:none;
+
+    will-change:transform;
+
+}
+

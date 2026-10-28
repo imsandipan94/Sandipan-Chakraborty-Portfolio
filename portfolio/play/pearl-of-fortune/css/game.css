@@ -1,0 +1,272 @@
+/* ==========================================
+   GAME FOUNDATION
+   Mystic Slot Prototype
+========================================== */
+
+/* ==========================================
+   VIEWPORT
+========================================== */
+
+#viewport{
+
+    width:100vw;
+    height:100vh;
+
+    /* dvh accounts for mobile browser chrome (address bar) showing/
+       hiding, so the viewport doesn't get cut off or leave a gap
+       under scaler.js's letterboxing as that chrome appears/
+       disappears. 100vh above is kept as the fallback for browsers
+       that don't support dvh - this rule only overrides it where
+       dvh is understood. */
+    height:100dvh;
+
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    overflow:hidden;
+
+    background:#000;
+
+}
+
+/* ==========================================
+   GAME ROOT
+   Fixed Internal Resolution
+========================================== */
+
+#game{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    width:800px;
+    height:1600px;
+
+    overflow:hidden;
+
+    background:var(--background-color);
+
+    transform-origin:center center;
+
+    transform:translate(-50%, -50%);
+
+}
+
+/* ==========================================
+   SCENE
+========================================== */
+
+#scene{
+
+    position:absolute;
+
+    inset:0;
+
+}
+
+/* ==========================================
+   GAME LAYERS
+========================================== */
+
+#background-layer,
+#popup-layer,
+#effects-layer{
+
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+
+}
+
+#background-layer{
+
+    z-index:0;
+
+}
+
+#scene{
+
+    z-index:10;
+
+}
+
+#popup-layer{
+
+    z-index:100;
+
+}
+
+#effects-layer{
+
+    z-index:200;
+
+}
+
+/* ==========================================
+   PEARL FX LAYER
+   Unlike the three layers above, this is NOT a child of
+   #game - it's a direct child of <body> (see index.html),
+   fixed to the real browser viewport instead of #game's own
+   0-0-800-1600 box. Pearl Collection FX (animationManager.js)
+   positions its traveling pearl clone using real
+   getBoundingClientRect() screen coordinates, and #game is
+   dynamically scaled by GameScaler (transform:scale(...) in
+   scaler.js) - an element living inside that scaled context
+   can't use raw viewport px for its own left/top. Sitting
+   outside #game's transform entirely sidesteps that. z-index
+   is chosen deliberately (comfortably above #effects-layer's
+   200, since it must render above the whole scaled game,
+   reels included) rather than an arbitrary large number.
+========================================== */
+
+#pearl-fx-layer{
+
+    position:fixed;
+
+    inset:0;
+
+    pointer-events:none;
+
+    z-index:400;
+
+}
+
+/* ==========================================
+   ROTATE DEVICE OVERLAY
+   Hidden by default (and on desktop/tablet) - the media query
+   below only matches landscape orientation AND a short viewport
+   height, which in practice means a PHONE rotated sideways (tablets
+   in landscape stay comfortably above this height threshold and
+   remain a normal, usable orientation for them). z-index is set
+   above even #loading-screen (100000, see loading.css) so this can
+   never be hidden behind it.
+========================================== */
+
+#rotate-overlay{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:200000;
+
+    flex-direction:column;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:16px;
+
+    padding:24px;
+
+    text-align:center;
+
+    background:#04101c;
+
+    color:#f4f8ff;
+
+}
+
+#rotate-overlay-icon{
+
+    font-size:48px;
+
+    transform:rotate(90deg);
+
+}
+
+#rotate-overlay-text{
+
+    max-width:320px;
+
+    font-size:16px;
+
+    line-height:1.5;
+
+}
+
+@media (orientation:landscape) and (max-height:500px){
+
+    #rotate-overlay{
+
+        display:flex;
+
+    }
+
+}
+
+/* ==========================================
+   BACKGROUND ARTWORK (v4.7)
+   Drop-in replacement asset: assets/background/background.png
+   Recommended export: 3200 x 6400 (4x master, same 1:2
+   aspect ratio as the 800 x 1600 game root). Layered in
+   front of the original placeholder gradient, which is kept
+   as a fallback: if background.png hasn't been dropped in
+   yet, that image layer simply doesn't paint and the
+   gradient shows through underneath, so the game stays
+   playable either way. background-size:cover fills the
+   layer without distorting the artwork (crops instead of
+   stretching if a replacement image's aspect ratio differs
+   slightly). This is plain CSS painted by the existing
+   #background-layer element - no second scaling system; it
+   scales together with #game via the existing GameScaler.
+========================================== */
+
+#background-layer{
+
+    background-image:
+        url("../assets/background/background.png"),
+        linear-gradient(
+            180deg,
+            #04223c 0%,
+            #073b60 40%,
+            #02131f 100%
+        );
+
+    background-size:cover, cover;
+
+    background-position:center, center;
+
+    background-repeat:no-repeat, no-repeat;
+
+}
+
+/* ==========================================
+   FREE SPINS BACKGROUND (Milestone - Free Spins)
+   Drop-in replacement asset: assets/background/fs-bg.png - same
+   graceful-fallback behavior as the base #background-layer rule
+   above (if fs-bg.png hasn't been dropped in yet, that image layer
+   simply doesn't paint and the SAME shared gradient underneath
+   shows through). FreeSpinsFeature toggles this class at the
+   midpoint of the feature-transition glow (see
+   AnimationManager.presentFeatureTransition()), so the swap is
+   masked by the glow's peak coverage instead of popping instantly,
+   and removes it again when the feature ends.
+========================================== */
+
+#background-layer.free-spins-active{
+
+    background-image:
+        url("../assets/background/fs-bg.png"),
+        linear-gradient(
+            180deg,
+            #04223c 0%,
+            #073b60 40%,
+            #02131f 100%
+        );
+
+    background-size:cover, cover;
+
+    background-position:center, center;
+
+    background-repeat:no-repeat, no-repeat;
+
+}
