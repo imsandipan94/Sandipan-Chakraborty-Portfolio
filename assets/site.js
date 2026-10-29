@@ -40,3 +40,41 @@
     vids.forEach(function (v) { io.observe(v); });
   }
 })();
+
+/* Hero phones: each screen plays three game trailers for 5 seconds each, in a loop. */
+(function () {
+  var SECONDS = 5;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.phone[data-rotate]').forEach(function (phone) {
+    var vids = Array.prototype.slice.call(phone.querySelectorAll('video.rv'));
+    var cap = phone.querySelector('.cap');
+    if (vids.length < 2) return;
+    var i = 0, timer = null, visible = false;
+    function start(v) { return parseFloat(v.getAttribute('data-start') || '0') || 0; }
+    function playFrom(v) {
+      try { v.currentTime = start(v); } catch (e) {}
+      var p = v.play(); if (p && p.catch) p.catch(function () {});
+    }
+    function warm(v) { if (v.preload !== 'auto') { v.preload = 'auto'; try { v.load(); } catch (e) {} } }
+    function show(n) {
+      var prev = vids[i];
+      i = n;
+      var v = vids[i];
+      playFrom(v);
+      v.classList.add('on');
+      if (prev !== v) { prev.classList.remove('on'); setTimeout(function () { if (!vids[i] || vids[i] !== prev) prev.pause(); }, 500); }
+      if (cap) { cap.classList.add('fade'); setTimeout(function () { cap.textContent = v.getAttribute('data-title'); cap.classList.remove('fade'); }, 200); }
+      warm(vids[(i + 1) % vids.length]);
+    }
+    function tick() { show((i + 1) % vids.length); }
+    function run() { if (!timer && !reduce) timer = setInterval(tick, SECONDS * 1000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } vids.forEach(function (v) { v.pause(); }); }
+    warm(vids[1]);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (en) {
+        visible = en[0].isIntersecting;
+        if (visible) { playFrom(vids[i]); run(); } else { stop(); }
+      }, { threshold: 0.25 }).observe(phone);
+    } else { playFrom(vids[0]); run(); }
+  });
+})();

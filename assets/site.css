@@ -293,3 +293,31 @@ a.ship{transition:border-color .2s,transform .2s}a.ship:hover{border-color:var(-
 .subhead{font:400 26px/1.2 var(--serif,Georgia,serif);color:var(--text,#f3efe2);margin:40px 0 8px;display:flex;align-items:center;gap:16px}
 .subhead::after{content:"";flex:1;height:1px;background:var(--line)}
 .group-note{color:var(--text-dim,#aeb8c8);max-width:70ch;margin:0 0 24px}
+.about-top{display:grid;grid-template-columns:1fr 340px;gap:56px;align-items:start}
+.about-top .portrait{order:2}
+.portrait{position:sticky;top:96px}
+.portrait img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:4px;filter:saturate(.95)}
+@media (max-width:860px){.about-top{grid-template-columns:1fr;gap:28px}.about-top .portrait{order:0}.portrait{position:static;max-width:320px}}
+.tool-grid.c3{grid-template-columns:repeat(4,1fr)}
+@media (max-width:860px){.tool-grid.c3{grid-template-columns:repeat(2,1fr)}}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:860px){.cards3{grid-template-columns:1fr}}
+.card3{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:24px}
+.card3 h3{font-size:20px;margin-bottom:10px}
+.card3 p{color:var(--text-dim);font-size:15px;margin:0}
+.profile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.pf{background:var(--bg);padding:26px 28px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pk{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.pv{font-family:var(--display);font-size:22px;line-height:1.3;color:var(--text)}
+@media (max-width:520px){.profile-grid{grid-template-columns:1fr}.pf{padding:20px}}
+.page-title h1.one-line{max-width:none;margin-top:0}
+@media (min-width:520px){.page-title h1.one-line{white-space:nowrap}}
+.logos{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+@media (max-width:1000px){.logos{grid-template-columns:repeat(3,1fr)}}
+.logo{aspect-ratio:8/5;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#111}
+.logo img{display:block;width:100%;height:100%;object-fit:cover}
+@media (max-width:520px){.logos{grid-template-columns:repeat(2,1fr)}}
+.phone[data-rotate] video.rv{position:absolute;left:7px;top:7px;width:calc(100% - 14px);height:calc(100% - 14px);opacity:0;transition:opacity .45s ease;pointer-events:none}
+.phone[data-rotate] video.rv.on{opacity:1}
+.phone[data-rotate] .cap{transition:opacity .25s ease}
+.phone[data-rotate] .cap.fade{opacity:0}
