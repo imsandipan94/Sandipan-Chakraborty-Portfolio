@@ -69,7 +69,7 @@ html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;font-family:
 .doll.lv1 .orb{opacity:.12}.doll.lv2 .orb{opacity:.2}.doll.lv3 .orb{opacity:.3}.doll.lv4 .orb,.doll.lv5 .orb{opacity:.55;animation:pulse 1s ease-in-out infinite alternate}
 .doll.awake .dimg{animation:dollbob 1.2s ease-in-out infinite}
 @keyframes dollbob{50%{translate:0 -5px}}
-.doll .lpips{display:flex;gap:4px;margin:3px 0 2px}
+.doll .lpips{display:none} /* level meter removed: growth is shown by doll size + glow */
 .doll .lpip{width:16px;height:6px;border-radius:3px;background:#0008;border:1px solid #fff3}
 .doll .lpip.on{background:var(--dc);box-shadow:0 0 6px var(--dc)}
 .doll .lbl{font-weight:800;font-size:15px;padding:3px 12px;border-radius:8px;background:#1a0b29;border:2px solid var(--dc);color:#fff;
@@ -386,14 +386,14 @@ const LV = (() => {
     // Cash on Reel
     let cor = null;
     if (paying(vals).length) {
-      const before = cloneV(vals);
+      // work on a copy: res.vals must stay exactly what landed on the reels
+      const before = cloneV(vals), work = cloneV(vals);
       const w = state.dolls.map((l) => l + 1);
       const d = pickW(DOLLS.map((k, i) => [i, w[i]]));
-      const op = boosterBase(d, vals, bet);
-      const cls = paying(vals);
-      const inCl = {}; cls.forEach((cl) => cl.forEach(([c, r]) => (inCl[c + ',' + r] = 1)));
-      const award = r2(payingValue(vals));
-      cor = { doll: d, kind: DOLLS[d], op, before, after: cloneV(vals), clusters: cls, award };
+      const op = boosterBase(d, work, bet);
+      const cls = paying(work);
+      const award = r2(payingValue(work));
+      cor = { doll: d, kind: DOLLS[d], op, before, after: cloneV(work), clusters: cls, award };
     }
 
     // feeders
@@ -410,7 +410,7 @@ const LV = (() => {
         const act = [false, false, false];
         if (Array.isArray(force)) force.forEach((on, i) => (act[i] = !!on)); else feeders.forEach((f) => (act[f.doll] = true));
         if (!Array.isArray(force)) state.dolls.forEach((l, i) => { if (l >= AWAKE) act[i] = true; });
-        hnr = holdAndRespin(vals, act, bet);
+        hnr = holdAndRespin(cor ? cor.after : vals, act, bet);
         act.forEach((a, i) => { if (a) state.dolls[i] = 0; });
       }
     }
@@ -513,7 +513,7 @@ const LV = (() => {
     while (count < 3) { const c = ri(COLS), r = ri(ROWS); if (vals[c][r] != null) continue; vals[c][r] = r2(pickW(HNR_COIN_V) * bet); seeded.push({ c, r, v: vals[c][r] }); count++; }
     const startFresh = {}; for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (vals[c][r] != null) startFresh[c + ',' + r] = 1;
     const startMerges = mergeRuns(vals, startFresh);
-    const start = { active: active.slice(), seeded, merges: startMerges, vals: cloneV(vals) };
+    const start = { active: active.slice(), base: cloneV(baseVals), seeded, merges: startMerges, vals: cloneV(vals) };
     const meters = { mini: 0, minor: 0, major: 0, grand: 0 };
     const act = active.slice(); const fired = [0, 0, 0];
     const steps = []; let left = 3; let jpTotal = 0; let guard = 0;
@@ -746,6 +746,10 @@ let cells = []; // cells[c][r] = {sym, val, jp, dim, glow, locked, dx, dy, s, a,
 let reelSpin = [false, false, false, false, false];
 let reelOff = [0, 0, 0, 0, 0];
 let reelStrip = [[], [], [], [], []];
+let reelVals = [[], [], [], [], []];
+const rndCoinVal = (pairs = LV.COIN_V) => { let tot = 0; pairs.forEach((p) => (tot += p[1])); let x = Math.random() * tot; for (const [v, w] of pairs) { x -= w; if (x < 0) return Math.round(v * bet() * 100) / 100; } return Math.round(pairs[0][0] * bet() * 100) / 100; };
+const FLICK = Array.from({ length: 64 }, () => 0); // per-frame coin values for H&R cell spins
+function refreshFlick() { for (let i = 0; i < FLICK.length; i++) FLICK[i] = rndCoinVal(LV.HNR_COIN_V); }
 let cellSpin = null; // H&R per-cell spin: cellSpin[c][r] = bool
 let mode = 'base';
 function cell(sym, val = null) { return { sym, val, jp: null, dim: false, glow: 0, locked: false, dx: 0, dy: 0, s: 1, a: 1, pop: 0 }; }
@@ -777,25 +781,24 @@ function drawBoard(now) {
     if (reelSpin[c]) {
       const off = reelOff[c] % CH, base = Math.floor(reelOff[c] / CH);
       for (let k = -1; k < ROWS + 1; k++) {
-        const sym = reelStrip[c][(((base - k) % 30) + 30) % 30];
+        const idx = (((base - k) % 30) + 30) % 30; const sym = reelStrip[c][idx];
         drawSym(sym, c * CW, k * CH + off, true, .9);
+        if (sym === 'COIN') coinLabel(reelVals[c][idx] ?? bet(), c * CW, k * CH + off);
       }
     } else {
       for (let r = 0; r < ROWS; r++) {
         const ce = cells[c][r]; const x = c * CW + ce.dx, y = r * CH + ce.dy;
+        if (ce.dx && ce.sym) { movers.push([ce, c, r]); if (ce.locked) { rg.fillStyle = '#3fe0d011'; rg.fillRect(c * CW + 2, r * CH + 2, CW - 4, CH - 4); } continue; }
         if (cellSpin && cellSpin[c][r]) { // H&R single-cell spin
           const k = Math.floor(now / 70 + c * 3 + r * 5) % 4;
-          drawSym(k === 0 ? 'COIN_H' : 'EMPTY', c * CW, r * CH + ((now / 2.2) % CH) - CH / 2, true, .55);
+          const fy = r * CH + ((now / 2.2) % CH) - CH / 2;
+          drawSym(k === 0 ? 'COIN_H' : 'EMPTY', c * CW, fy, true, .55);
+          if (k === 0) coinLabel(FLICK[(c * 7 + r * 13 + Math.floor(now / 280)) % FLICK.length], c * CW, fy);
           continue;
         }
         if (ce.locked) { rg.fillStyle = '#3fe0d022'; rg.fillRect(c * CW + 2, r * CH + 2, CW - 4, CH - 4); rg.strokeStyle = '#3fe0d0aa'; rg.lineWidth = 2; rg.strokeRect(c * CW + 3, r * CH + 3, CW - 6, CH - 6); }
         if (!ce.sym) { if (mode === 'hnr') drawSym('EMPTY', x, y, false, .8); continue; }
-        const pulse = ce.glow ? 1 + Math.sin(now / 90) * .05 * ce.glow : 1;
-        const sc = ce.s * pulse * (1 + ce.pop * .25);
-        if (ce.glow) { rg.save(); rg.globalAlpha = .5 * ce.glow; const gg = rg.createRadialGradient(x + CW / 2, y + CH / 2, 5, x + CW / 2, y + CH / 2, 60); gg.addColorStop(0, ce.glowCol || '#ffd25e'); gg.addColorStop(1, 'transparent'); rg.fillStyle = gg; rg.fillRect(x - 10, y - 10, CW + 20, CH + 20); rg.restore(); }
-        drawSym(ce.sym, x, y, false, ce.a * (ce.dim ? .28 : 1), sc);
-        if (ce.val != null) coinLabel(ce.val, x, y, sc, ce.dim ? '#5a4a3a' : '#2a1206');
-        if (ce.jp) { rg.save(); rg.translate(x + CW / 2, y + CH / 2 + 2); rg.scale(sc, sc); rg.font = '900 19px Rubik'; rg.textAlign = 'center'; rg.textBaseline = 'middle'; rg.lineWidth = 5; rg.strokeStyle = '#000'; rg.strokeText(ce.jp.toUpperCase(), 0, 0); rg.fillStyle = '#fff'; rg.fillText(ce.jp.toUpperCase(), 0, 0); rg.restore(); }
+        drawCell(ce, x, y, now);
       }
     }
     rg.restore();
@@ -803,6 +806,25 @@ function drawBoard(now) {
   // separators
   rg.strokeStyle = '#e9a72933'; rg.lineWidth = 1.5;
   for (let c = 1; c < COLS; c++) { rg.beginPath(); rg.moveTo(c * CW, 0); rg.lineTo(c * CW, 345); rg.stroke(); }
+  // moving coins (Rearrange slides, merges) ride over the reels, lifted with a shadow
+  for (const [ce, c, r] of movers) {
+    const x = c * CW + ce.dx, y = r * CH + ce.dy;
+    rg.save(); rg.shadowColor = '#000c'; rg.shadowBlur = 16; rg.shadowOffsetY = 6;
+    drawCell(ce, x, y - 4, now, 1.08);
+    rg.restore();
+  }
+  movers.length = 0;
+}
+const movers = [];
+function drawCell(ce, x, y, now, lift = 1) {
+  {{
+        const pulse = ce.glow ? 1 + Math.sin(now / 90) * .05 * ce.glow : 1;
+        const sc = ce.s * pulse * (1 + ce.pop * .25) * lift;
+        if (ce.glow) { rg.save(); rg.globalAlpha = .5 * ce.glow; const gg = rg.createRadialGradient(x + CW / 2, y + CH / 2, 5, x + CW / 2, y + CH / 2, 60); gg.addColorStop(0, ce.glowCol || '#ffd25e'); gg.addColorStop(1, 'transparent'); rg.fillStyle = gg; rg.fillRect(x - 10, y - 10, CW + 20, CH + 20); rg.restore(); }
+        drawSym(ce.sym, x, y, false, ce.a * (ce.dim ? .28 : 1), sc);
+        if (ce.val != null) coinLabel(ce.val, x, y, sc, ce.dim ? '#5a4a3a' : '#2a1206');
+        if (ce.jp) { rg.save(); rg.translate(x + CW / 2, y + CH / 2 + 2); rg.scale(sc, sc); rg.font = '900 19px Rubik'; rg.textAlign = 'center'; rg.textBaseline = 'middle'; rg.lineWidth = 5; rg.strokeStyle = '#000'; rg.strokeText(ce.jp.toUpperCase(), 0, 0); rg.fillStyle = '#fff'; rg.fillText(ce.jp.toUpperCase(), 0, 0); rg.restore(); }
+  }}
 }
 
 // ---------------------------------------------------------------- FX layer
@@ -832,7 +854,7 @@ function drawFx(now, dt) {
     if (f.trail) for (let k = 0; k < 2; k++) parts.push({ x, y, vx: (Math.random() - .5) * 1.4, vy: (Math.random() - .5) * 1.4, life: 26, max: 26, col: f.col, sz: 2 + Math.random() * 3 });
     if (f.img) { const s = f.size * (1 + Math.sin(Math.PI * t) * .35); fg.drawImage(f.img, x - s / 2, y - s / 2, s, s); }
     else { fg.save(); const gr = fg.createRadialGradient(x, y, 1, x, y, 18); gr.addColorStop(0, '#fff'); gr.addColorStop(.4, f.col); gr.addColorStop(1, 'transparent'); fg.fillStyle = gr; fg.beginPath(); fg.arc(x, y, 18, 0, 7); fg.fill(); fg.restore(); }
-    if (f.label) { fg.font = '800 22px Rubik'; fg.textAlign = 'center'; fg.lineWidth = 5; fg.strokeStyle = '#000'; fg.strokeText(f.label, x, y - 24); fg.fillStyle = '#fff'; fg.fillText(f.label, x, y - 24); }
+    if (f.label) { const s = f.img ? f.size * (1 + Math.sin(Math.PI * t) * .35) : 46; const fs = Math.round(s * (f.label.length > 5 ? .26 : .32)); fg.font = `800 ${fs}px Rubik`; fg.textAlign = 'center'; fg.textBaseline = 'middle'; fg.lineWidth = 4; fg.strokeStyle = '#fff6d8'; fg.strokeText(f.label, x, y + 1); fg.fillStyle = '#2a1206'; fg.fillText(f.label, x, y + 1); fg.textBaseline = 'alphabetic'; }
     if (t >= 1) { flyers.splice(i, 1); f.res(); }
   }
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -1062,7 +1084,7 @@ async function doSpin(force) {
   }
   lastResp = res;
   SND.play('spin'); setMsg('');
-  for (let c = 0; c < COLS; c++) { reelStrip[c] = Array.from({ length: 30 }, randSym); reelOff[c] = 0; reelSpin[c] = true; }
+  for (let c = 0; c < COLS; c++) { reelStrip[c] = Array.from({ length: 30 }, randSym); reelVals[c] = reelStrip[c].map(() => rndCoinVal()); reelOff[c] = 0; reelSpin[c] = true; }
   // anticipation: 3+ coins already visible on reels 1-3 → slow last reels
   let coinsEarly = 0; for (let c = 0; c < 3; c++) for (let r = 0; r < ROWS; r++) if (res.grid[c][r] === 'COIN') coinsEarly++;
   const antic = coinsEarly >= 2 && !!res.cor;
@@ -1148,8 +1170,9 @@ async function dollCharge(d, ms = 750) {
 async function playCor(cor) {
   SND.play('corTrigger'); banner('CASH ON REEL', `The ${['Duplicate', 'Rearrange', 'Boost'][cor.doll]} doll casts its spell`);
   girlCast(true);
-  // highlight current clusters
-  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (cells[c][r].sym === 'COIN') { cells[c][r].glow = .7; cells[c][r].glowCol = '#c58bff'; }
+  // spotlight the coins: every other symbol dims for the whole feature
+  lines = []; lineAlpha = 0; idleLines = null;
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) { const ce = cells[c][r]; if (ce.sym === 'COIN') { ce.dim = false; ce.glow = .7; ce.glowCol = '#c58bff'; } else { ce.dim = true; ce.glow = 0; } }
   await wait(1300);
   await dollCharge(cor.doll);
   await applyOp(cor.op, cor.doll, 'COIN');
@@ -1165,7 +1188,7 @@ async function playCor(cor) {
   for (const [c, r] of order) {
     const ce = cells[c][r]; const v = ce.val; SND.play('collect');
     fly(cellCenter(c, r), [202, 1013], { col: '#ffd25e', dur: 420, arc: -40 }).then(() => {});
-    ce.pop = 1; tween(260, (t) => (ce.pop = 1 - t));
+    ce.pop = 1; tween(260, (t) => (ce.pop = 1 - t)).then(() => { ce.dim = true; ce.glow = 0; }); // collected → dim
     run += v; winShown = run; vWin.textContent = fmt(run);
     await wait(Math.max(90, 260 - order.length * 10));
   }
@@ -1220,7 +1243,7 @@ async function playHnr(res, preWin) {
   for (let i = 0; i < 3; i++) dollUI(i, dollLv[i], { cls: hnrAct[i] ? 'active' : 'inactive' });
   // keep coins, clear the rest
   lines = []; lineAlpha = 0;
-  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) { const ce = cells[c][r]; Object.assign(ce, { glow: 0, dim: false, dx: 0, dy: 0, a: 1, pop: 0 }); if (res.vals[c][r] != null) { ce.sym = 'COIN_H'; ce.val = res.vals[c][r]; ce.locked = true; } else { ce.sym = null; ce.val = null; ce.locked = false; } }
+  for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) { const ce = cells[c][r]; Object.assign(ce, { glow: 0, dim: false, dx: 0, dy: 0, a: 1, pop: 0 }); if (H.start.base[c][r] != null) { ce.sym = 'COIN_H'; ce.val = H.start.base[c][r]; ce.locked = true; } else { ce.sym = null; ce.val = null; ce.locked = false; } }
   await wait(450);
   for (const s of H.start.seeded) { const ce = cells[s.c][s.r]; await fly([270, 380], cellCenter(s.c, s.r), { img: SYMS.COIN_H.c, size: 70, dur: 480, col: '#ffd25e', label: fmtS(s.v) }); Object.assign(ce, { sym: 'COIN_H', val: s.v, locked: true, glow: 1, glowCol: '#ffd25e' }); SND.play('land'); }
   girlCast(false);
@@ -1241,7 +1264,7 @@ async function playHnr(res, preWin) {
     ce.glow = 1; ce.glowCol = '#ffd25e'; SND.play('collect');
     fly(cellCenter(c, r), [202, 1013], { col: '#ffd25e', dur: 380, arc: -40 });
     run += ce.val; winShown = Math.min(res.total, run); vWin.textContent = fmt(winShown);
-    ce.pop = 1; tween(250, (t) => (ce.pop = 1 - t));
+    ce.pop = 1; tween(250, (t) => (ce.pop = 1 - t)).then(() => { ce.dim = true; ce.glow = 0; }); // collected → dim
     await wait(170);
   }
   setMsg(`Hold & Respin pays ${fmt(H.total)}${H.capped ? ' (max win)' : ''}`);
@@ -1269,7 +1292,7 @@ async function playMerges(merges) {
   }
 }
 async function playStep(st) {
-  SND.play('respin');
+  SND.play('respin'); refreshFlick();
   // spin empty cells
   cellSpin = cells.map((col) => col.map((ce) => ce.val == null));
   for (const col of cells) for (const ce of col) ce.glow = 0;
@@ -1293,7 +1316,7 @@ async function playStep(st) {
     const ce = cells[j.c][j.r]; const pip = (j.award ? LV.JP[j.jp].need : j.pip) - 1;
     const target = pipPos(j.jp, pip); SND.play('jpPip');
     const img = SYMS['JP_' + j.jp].c; Object.assign(ce, { sym: null, jp: null, glow: 0 });
-    await fly(cellCenter(j.c, j.r), target, { img, size: 54, dur: 600, col: JP_COL[j.jp], arc: -60 });
+    await fly(cellCenter(j.c, j.r), target, { img, size: 54, dur: 600, col: JP_COL[j.jp], arc: -60, label: j.jp.toUpperCase() });
     const pipsEl = $(JPN[j.jp] + ' .pips').children; if (pipsEl[pip]) pipsEl[pip].classList.add('on');
     burst(...target, JP_COL[j.jp], 16, 3);
     if (j.award) await jackpotWin(j.jp, j.award);

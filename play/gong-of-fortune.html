@@ -58,17 +58,31 @@ body { background: var(--ink); color: var(--text); font-family: var(--ui); overf
 
 /* ---------- top: gong / quick hit ---------- */
 #top { display: flex; align-items: center; justify-content: center; z-index: 2; }
-#gongWrap { position: relative; }
-#gongCv { position: absolute; inset: 0; width: 100%; height: 100%; }
-#gongWrap.hit { animation: gongHit .9s ease-out; }
+#gongs { display: flex; gap: 10px; align-items: flex-start; justify-content: center; width: 100%; }
+.gcol { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+#gongs { perspective: 760px; }
+.gtilt { transition: transform .6s cubic-bezier(.3, .7, .3, 1); transform-origin: 50% 60%; }
+#stage:not(.hr):not(.fs) #top:not(.forward) .gtilt.red { transform: rotateY(var(--tiltY)) rotateX(5deg); }
+#stage:not(.hr):not(.fs) #top:not(.forward) .gtilt.green { transform: rotateY(calc(var(--tiltY) * -1)) rotateX(5deg); }
+#gongs { --tiltY: 20deg; }
+@media (prefers-reduced-motion: reduce) { .gtilt { transition: none; } }
+.gongWrap { position: relative; transition: opacity .4s, filter .4s; }
+.gongWrap.dimmed { opacity: .32; filter: saturate(.45); }
+.gongCv { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gongWrap.hit { animation: gongHit .9s ease-out; }
 @keyframes gongHit { 0% { transform: rotate(0) scale(1); } 15% { transform: rotate(-4deg) scale(1.06); } 35% { transform: rotate(3deg) scale(.98); } 55% { transform: rotate(-2deg) scale(1.02); } 75% { transform: rotate(1deg); } 100% { transform: rotate(0) scale(1); } }
-#gongWrap.tap { animation: gongTap .35s ease-out; }
-@keyframes gongTap { 40% { transform: scale(1.05); } }
-#gongText { position: absolute; left: 50%; top: 57%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #4a1306;
-  text-shadow: 0 1px 0 rgba(255, 245, 200, .55); pointer-events: none; text-align: center; }
-#gongText .g1 { font-family: var(--ui); font-weight: 900; font-size: calc(var(--gs) * .075); letter-spacing: .12em; border-bottom: 2px solid rgba(74, 19, 6, .7); padding: 0 .2em 1px; }
-#gongCount { font-family: var(--ui); font-weight: 900; font-size: calc(var(--gs) * .25); line-height: 1; margin-top: calc(var(--gs) * .01); font-variant-numeric: tabular-nums; }
-#gongText .g2 { font-family: var(--ui); font-weight: 900; font-size: calc(var(--gs) * .06); letter-spacing: .06em; }
+.gongWrap.tap { animation: gongTap .35s ease-out; }
+@keyframes gongTap { 40% { transform: scale(1.06); } }
+.gongWrap.live { animation: liveGlow 1.6s ease-in-out infinite; }
+@keyframes liveGlow { 50% { filter: drop-shadow(0 0 18px rgba(110, 255, 180, .75)); } }
+.gongText { position: absolute; left: 50%; top: 57%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; text-align: center; white-space: nowrap; }
+.gongText { color: #4a1306; text-shadow: 0 1px 0 rgba(255, 245, 200, .6); }
+.gongText .g1 { font-family: var(--ui); font-weight: 900; font-size: calc(var(--gs) * .075); letter-spacing: .12em; border-bottom: 2px solid currentColor; padding: 0 .2em 1px; opacity: .85; }
+.gongText .gc { font-family: var(--ui); font-weight: 900; font-size: calc(var(--gs) * .25); line-height: 1; margin-top: calc(var(--gs) * .01); font-variant-numeric: tabular-nums; }
+.gongText .g2 { font-family: var(--ui); font-weight: 900; font-size: calc(var(--gs) * .052); letter-spacing: .04em; }
+.gcap { font-family: var(--ui); font-weight: 700; font-size: 12px; letter-spacing: .14em; white-space: nowrap; }
+.gcap.red { color: #ffa48c; } .gcap.green { color: #7ff0b6; }
+.landscape .gcap { font-size: 14px; }
 #top.forward { z-index: 26; }
 #meter { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; height: 100%; padding: 2px 0; }
 #meter[hidden] { display: none !important; }
@@ -98,6 +112,14 @@ body { background: var(--ink); color: var(--text); font-family: var(--ui); overf
 #reelFrame::before { left: -10px; } #reelFrame::after { right: -10px; }
 #reelCv { display: block; width: 474px; height: 474px; border-radius: 10px; background: #1d0307; }
 #reelFrame.antic { animation: antic .5s ease-in-out infinite alternate; }
+#reelFrame.antic.green { animation-name: anticG; }
+@keyframes anticG { to { box-shadow: 0 0 0 3px var(--lacquer-deep), 0 0 50px 14px rgba(110, 255, 180, .75); } }
+#stage.hr #game { background:
+    radial-gradient(70% 36% at 50% 14%, rgba(90, 255, 170, .22), transparent 70%),
+    radial-gradient(90% 60% at 50% 100%, rgba(30, 140, 90, .45), transparent 70%),
+    repeating-radial-gradient(circle at 50% 0, transparent 0 22px, rgba(140, 255, 200, .05) 22px 24px),
+    linear-gradient(180deg, #08362a 0%, #06241c 55%, #031410 100%); }
+#stage.hr #reelFrame { background: linear-gradient(135deg, #f2ffe0, #7ad8a0 25%, #1f6e48 50%, #c9f2b0 75%, #2c7a52); }
 @keyframes antic { to { box-shadow: 0 0 0 3px var(--lacquer-deep), 0 0 50px 14px rgba(255, 210, 90, .8); } }
 
 /* ---------- info bar ---------- */
@@ -224,7 +246,7 @@ pre#resp { white-space: pre-wrap; word-break: break-word; font-family: ui-monosp
 /* ---------- positions ---------- */
 .portrait { width: 540px; height: 1160px; }
 .portrait #logo { left: 110px; top: 12px; width: 320px; height: 62px; }
-.portrait #top { left: 50px; top: 80px; width: 440px; height: 296px; }
+.portrait #top { left: 20px; top: 80px; width: 500px; height: 298px; }
 .portrait #reelFrame { left: 25px; top: 386px; width: 490px; height: 490px; }
 .portrait #infoBar { left: 25px; top: 890px; width: 490px; height: 46px; }
 .portrait #spinRow { left: 0; top: 946px; width: 540px; height: 110px; }
@@ -248,14 +270,14 @@ pre#resp { white-space: pre-wrap; word-break: break-word; font-family: ui-monosp
     <div id="game">
       <div id="logo" class="box" role="img" aria-label="Gong of Fortune"><span class="l1">GONG</span><span class="l2">OF FORTUNE</span></div>
       <div id="top" class="box">
-        <div id="gongWrap" aria-live="polite">
-          <canvas id="gongCv"></canvas>
-          <div id="gongText"><span class="g1">GONG</span><span id="gongCount">5</span><span class="g2">FREE SPINS</span></div>
+        <div id="gongs" aria-live="polite">
+          <div class="gcol"><div class="gtilt red"><div class="gongWrap red" id="gongRed"><canvas class="gongCv"></canvas><div class="gongText"><span class="g1">GONG</span><span class="gc" id="gongCount">5</span><span class="g2">FREE SPINS</span></div></div></div><span class="gcap red">3 RED · FREE SPINS</span></div>
+          <div class="gcol"><div class="gtilt green"><div class="gongWrap green" id="gongGreen"><canvas class="gongCv"></canvas><div class="gongText"><span class="g1">GONG</span><span class="gc" id="jadeCount">5</span><span class="g2">RESPINS</span></div></div></div><span class="gcap green">3 GREEN · HOLD &amp; RESPIN</span></div>
         </div>
         <div id="meter" hidden aria-label="Quick Hit meter"></div>
       </div>
       <div id="reelFrame" class="box"><canvas id="reelCv" aria-label="Reels"></canvas></div>
-      <div id="infoBar" class="box"><span id="infoText">3 GONGS TRIGGER FREE SPINS</span></div>
+      <div id="infoBar" class="box"><span id="infoText">COLLECT GONGS TO FILL BOTH COLLECTORS</span></div>
       <div id="spinRow" class="box">
         <button id="spinBtn" aria-label="Spin">SPIN</button>
         <div class="pm"><button id="minus" class="rnd" aria-label="Lower bet">−</button><button id="plus" class="rnd" aria-label="Raise bet">+</button></div>
@@ -292,10 +314,12 @@ pre#resp { white-space: pre-wrap; word-break: break-word; font-family: ui-monosp
 // Pure logic: RNG outcome, Gong collection, Free Spins, Quick Hit, wins.
 // Mirrors the deck's server response fields (balance, bet_amount, reel_matrix,
 // win_amount, gong_state, free_spin_state).
-const S = { J: 0, Q: 1, K: 2, A: 3, INGOT: 4, LANTERN: 5, DRAGON: 6, WILD: 7, SCATTER: 8 };
-const SYMBOL_NAMES = ['J', 'Q', 'K', 'A', 'Jade Ingot', 'Lantern', 'Golden Dragon', 'Phoenix Wild', 'Gong Scatter'];
+// SCATTER = red Gong Scatter (feeds the red Gong -> Free Spins), JADE = green Gong Scatter (feeds the green Gong -> Hold & Respin),
+// COIN = Hold & Respin coin (never on the base reels).
+const S = { J: 0, Q: 1, K: 2, A: 3, INGOT: 4, LANTERN: 5, DRAGON: 6, WILD: 7, SCATTER: 8, JADE: 9, COIN: 10 };
+const SYMBOL_NAMES = ['J', 'Q', 'K', 'A', 'Jade Ingot', 'Lantern', 'Golden Dragon', 'Phoenix Wild', 'Red Gong Scatter', 'Green Gong Scatter', 'Coin'];
 // 3-of-a-kind payouts in multiples of the LINE bet (total bet / 5)
-const PAYS = [8, 10, 14, 18, 25, 40, 80, 150, 0];
+const PAYS = [8, 10, 14, 18, 25, 40, 80, 150, 0, 0, 0];
 const LINES = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
 const TIERS = [
   { wilds: 4, mult: 3 }, { wilds: 5, mult: 4 }, { wilds: 6, mult: 5 }, { wilds: 7, mult: 10 },
@@ -319,7 +343,7 @@ function evalLines(m, lineBet) {
   const wins = [];
   LINES.forEach((ln, li) => {
     const s = ln.map((r, c) => m[c][r]);
-    if (s.includes(S.SCATTER)) return;
+    if (s.some(x => x >= S.SCATTER)) return;
     let target = s.find(x => x !== S.WILD);
     if (target === undefined) target = S.WILD;
     if (s.every(x => x === target || x === S.WILD)) {
@@ -337,7 +361,7 @@ function tierFor(wilds) {
 }
 
 function makeState(balance, bet) {
-  return { balance, bet, gong: GONG_MIN, fs: null };
+  return { balance, bet, gong: GONG_MIN, jade: GONG_MIN, fs: null, hold: null };
 }
 
 // opts.force: 'fs' (3 scatters) | 'tease' (2 scatters, miss on reel 3)
@@ -415,58 +439,77 @@ function serverSpin(state, rng, opts = {}) {
 }
 
 // ===================== DEMO SCRIPT ENGINE =====================
-// Scripted outcomes for the pitch demo (state.mode === 'script'):
-// - Base spins run in cycles of 10: 6 non-winning, 3 symbol wins, 1 Free Spins trigger, in shuffled order.
-//   Gong Scatters land on exactly 6 of the 10 (the trigger spin with 3, five others with 1 or 2).
-// - Each cycle plans its feature up front: total Free Spins N decides the prize band
-//   (5-8 FS -> 10-25x bet, 9-12 FS -> 26-100x, 13-20 FS -> 101-500x). Every feature pays 10x bet or more.
-// - The Gong is steered so it holds the planned starting spins when the trigger lands.
-//   The rest of N (always at least 1 spin) arrives during Free Spins: a Scatter reveals +1/+2/+3 spins, added at once.
-// - The whole feature (every grid, the Quick Hit multiplier, the retriggers) is generated at the trigger.
-const CYCLE = 10, SCRIPT_GONG_MAX = 19; // Gong stops at 19 so a feature can always add 1+ spins and stay within 20
+// Scripted outcomes for the pitch demo (state.mode === 'script'). Two Gong collectors:
+//   red Gong   <- red Gong Scatters   -> 3 red Gongs trigger FREE SPINS (Quick Hit multiplier)
+//   green Gong <- green Gong Scatters -> 3 green Gongs trigger HOLD & RESPIN
+// - Base spins run in cycles of 10: 6 non-winning, 3 symbol wins, 1 feature trigger, in shuffled order.
+//   The trigger alternates by cycle: odd cycles Free Spins (red), even cycles Hold & Respin (green).
+//   Gong Scatters land on exactly 6 of the 10 spins: the trigger spin has 3 of its colour, five others have 1 or 2
+//   Scatters of mixed colour (never 3 of one colour outside the trigger spin).
+// - Each cycle plans its feature up front. Total spins N decides the prize band, for both features:
+//   5-8 spins -> 10-25x bet, 9-12 -> 26-100x, 13-20 -> 101-500x. Every feature pays 10x bet or more.
+// - The triggering Gong is steered so it holds the planned starting spins S0 when the trigger lands.
+//   The rest of N (always at least 1 spin) is revealed during the feature by a Gong landing: +1/+2/+3 spins, added at once.
+// - Hold & Respin: the 3 green Gongs become coins. Spins do NOT reset when coins land; each respin uses one of the
+//   spins from the green Gong. When a row or column holds 3 coins, they merge into one coin (sum of values) placed
+//   on a random cell of that line; rows are checked top to bottom, then columns left to right, repeating until no line is full.
+//   The feature ends when the spins run out and pays the total of the coins on the board.
+// - The whole feature is generated at the trigger.
+const CYCLE = 10, SCRIPT_GONG_MAX = 19; // Gongs stop at 19 so a feature can always add 1+ spins and stay within 20
 const FS_PLANS = [
   { spins: [5, 8], prize: [10, 25], w: 70, mults: [[1, 40], [3, 30], [4, 18], [5, 12]] },
   { spins: [9, 12], prize: [26, 100], w: 24, mults: [[1, 15], [3, 25], [4, 20], [5, 20], [10, 20]] },
   { spins: [13, 20], prize: [101, 500], w: 6, mults: [[5, 30], [10, 35], [25, 22], [50, 10], [100, 3]] },
 ];
+const HR_PLANS = FS_PLANS.map(({ spins, prize, w }) => ({ spins, prize, w }));
+const COLOURS = { red: { sym: S.SCATTER, key: 'gong', plans: FS_PLANS }, green: { sym: S.JADE, key: 'jade', plans: HR_PLANS } };
+const HOLD_V = [[1, 30], [2, 26], [3, 18], [5, 13], [10, 8], [25, 4], [50, 1]];   // raw coin values (x bet) before scaling
+const NICE = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 200];
 const ri = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
 function shuffle(rng, a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-const planForSpins = n => FS_PLANS.findIndex(p => n >= p.spins[0] && n <= p.spins[1]);
+const planIdx = (plans, n) => plans.findIndex(p => n >= p.spins[0] && n <= p.spins[1]);
+const planForSpins = n => planIdx(FS_PLANS, n);
 const winOf = (m, lineBet) => evalLines(m, lineBet).reduce((a, w) => a + w.amount, 0);
+const cycleColour = n => n % 2 === 1 ? 'red' : 'green';
+const nearestNice = x => NICE.reduce((b, v) => Math.abs(v - x) < Math.abs(b - x) ? v : b, NICE[0]);
 
-function planFeature(state, rng) {
-  const g0 = Math.min(state.gong, SCRIPT_GONG_MAX);
-  let p = pickW(rng, FS_PLANS.map(x => x.w));
-  // every feature reveals at least 1 extra spin during Free Spins, so N >= starting spins + 1
-  if (FS_PLANS[p].spins[1] < g0 + 1) p = FS_PLANS.findIndex(x => x.spins[1] >= g0 + 1);
-  const N = ri(rng, Math.max(FS_PLANS[p].spins[0], GONG_MIN + 1, g0 + 1), FS_PLANS[p].spins[1]);
-  return { N, S0: ri(rng, Math.max(GONG_MIN, g0), Math.min(N - 1, 12)) };
+function planFeature(state, rng, colour) {
+  const plans = COLOURS[colour].plans, g0 = Math.min(state[COLOURS[colour].key], SCRIPT_GONG_MAX);
+  let p = pickW(rng, plans.map(x => x.w));
+  // every feature reveals at least 1 extra spin, so N >= starting spins + 1
+  if (plans[p].spins[1] < g0 + 1) p = plans.findIndex(x => x.spins[1] >= g0 + 1);
+  const N = ri(rng, Math.max(plans[p].spins[0], GONG_MIN + 1, g0 + 1), plans[p].spins[1]);
+  const lo = Math.max(GONG_MIN, g0);
+  return { colour, N, S0: ri(rng, lo, Math.max(lo, Math.min(N - 1, 12))) };
 }
 function newCycle(state, rng) {
+  const n = (state.script ? state.script.n : 0) + 1, colour = cycleColour(n);
   const types = shuffle(rng, ['trigger', 'win', 'win', 'win', 'lose', 'lose', 'lose', 'lose', 'lose', 'lose']);
   const others = shuffle(rng, types.map((t, i) => i).filter(i => types[i] !== 'trigger')).slice(0, 5);
   const scat = types.map((t, i) => t === 'trigger' ? 3 : others.includes(i) ? (rng() < 0.35 ? 2 : 1) : 0);
-  state.script = { n: (state.script ? state.script.n : 0) + 1, types, scat, idx: 0, trigI: types.indexOf('trigger'), triggered: false, plan: planFeature(state, rng) };
+  const cols = scat.map((k, i) => types[i] === 'trigger' ? [colour, colour, colour] : Array.from({ length: k }, () => rng() < 0.5 ? 'red' : 'green'));
+  state.script = { n, colour, types, scat, cols, idx: 0, trigI: types.indexOf('trigger'), triggered: false, plan: planFeature(state, rng, colour) };
 }
-// Gong increments for the Scatters of this spin: before the trigger they steer the Gong to the planned start.
-function scriptIncs(state, rng, nScat) {
-  const sc = state.script, incs = [];
-  if (sc.triggered || sc.idx > sc.trigI) { for (let k = 0; k < nScat; k++) incs.push(rng() < 0.25 ? 1 : 0); return incs; }
-  let D = Math.max(0, sc.plan.S0 - state.gong), L = 0;
-  for (let i = sc.idx; i <= sc.trigI; i++) L += i === sc.idx ? nScat : sc.scat[i];
-  for (let k = 0; k < nScat; k++) {
-    const lo = Math.max(0, D - 3 * (L - 1)), hi = Math.min(3, D);
+// Gong increments for this spin's Scatters. The colour that triggers this cycle is steered to the planned start;
+// the other colour drifts (+1 on a quarter of its Scatters).
+function scriptIncs(state, rng, cols) {
+  const sc = state.script, incs = [], steer = !sc.triggered && sc.idx <= sc.trigI;
+  let D = Math.max(0, sc.plan.S0 - state[COLOURS[sc.colour].key]), Lfut = 0, Lnow = cols.filter(x => x === sc.colour).length;
+  for (let i = sc.idx + 1; i <= sc.trigI; i++) Lfut += sc.cols[i].filter(x => x === sc.colour).length;
+  for (const col of cols) {
+    if (!steer || col !== sc.colour) { incs.push(rng() < 0.25 ? 1 : 0); continue; }
+    const L = Lnow + Lfut, lo = Math.max(0, D - 3 * (L - 1)), hi = Math.min(3, D);
     let inc = Math.min(3, lo); if (hi > inc && rng() < (sc.idx === sc.trigI ? 0.7 : 0.4)) inc = ri(rng, inc + 1, hi);
-    incs.push(inc); D -= inc; L--;
+    incs.push(inc); D -= inc; Lnow--;
   }
   return incs;
 }
-function baseGrid(rng, nScat, kind, tease) {
-  const reels = nScat === 3 ? [0, 1, 2] : tease ? [0, 1] : shuffle(rng, [0, 1, 2]).slice(0, nScat).sort();
+function baseGrid(rng, cols, kind, tease) {
+  const n = cols.length, reels = n === 3 ? [0, 1, 2] : tease ? [0, 1] : shuffle(rng, [0, 1, 2]).slice(0, n).sort();
   let best = null;
   for (let tries = 0; tries < 2000; tries++) {
     const m = [0, 1, 2].map(() => [0, 1, 2].map(() => pickW(rng, W_BASE)));
-    const sp = reels.map(c => { const r = Math.floor(rng() * 3); m[c][r] = S.SCATTER; return [c, r]; });
+    const sp = reels.map((c, k) => { const r = Math.floor(rng() * 3); m[c][r] = COLOURS[cols[k]].sym; return [c, r]; });
     const a = winOf(m, 0.2);
     const ok = kind === 'win' ? a > 0 && a <= 30 : a === 0;
     if (ok) return { m, sp };
@@ -515,27 +558,109 @@ function buildFeature(rng, N, S0) {
   }
   return last;
 }
+
+// ---------- Hold & Respin ----------
+const grid3 = v => [[v, v, v], [v, v, v], [v, v, v]];
+// Merge every full row / column (rows top to bottom, then columns left to right) until none is full.
+function resolveLines(occ, rng, nid, out) {
+  for (;;) {
+    let cells = null, type, index;
+    for (let r = 0; r < 3 && !cells; r++) if (occ[0][r] >= 0 && occ[1][r] >= 0 && occ[2][r] >= 0) { cells = [[0, r], [1, r], [2, r]]; type = 'row'; index = r; }
+    for (let c = 0; c < 3 && !cells; c++) if (occ[c][0] >= 0 && occ[c][1] >= 0 && occ[c][2] >= 0) { cells = [[c, 0], [c, 1], [c, 2]]; type = 'col'; index = c; }
+    if (!cells) return nid;
+    const parents = cells.map(([c, r]) => occ[c][r]), target = cells[ri(rng, 0, 2)];
+    cells.forEach(([c, r]) => { occ[c][r] = -1; }); occ[target[0]][target[1]] = nid;
+    out.push({ type, index, cells, target, parents, id: nid++ });
+  }
+}
+// Which cells fill on which respin, where the extra-spin Gongs land, and every merge (values come later).
+function holdStructure(rng, N, S0, startPos) {
+  const occ = grid3(-1); let nid = 0; const lands0 = [];
+  startPos.forEach(([c, r]) => { occ[c][r] = nid; lands0.push({ c, r, id: nid++, kind: 'coin' }); });
+  const m0 = []; nid = resolveLines(occ, rng, nid, m0);
+  const awards = []; let E = N - S0; while (E > 0) { const a = Math.min(E, ri(rng, 1, 3)); awards.push(a); E -= a; }
+  const rt = {}; let cur = S0, lp = -1;
+  for (const a of awards) { const p = ri(rng, lp + 1, cur - 1); rt[p] = a; lp = p; cur += a; }
+  const p = 0.12 + rng() * 0.12, steps = []; let nm = m0.length;
+  for (let i = 0; i < N; i++) {
+    const empties = []; for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) if (occ[c][r] < 0) empties.push([c, r]);
+    shuffle(rng, empties); const lands = [];
+    if (rt[i]) { const [c, r] = empties.pop(); occ[c][r] = nid; lands.push({ c, r, id: nid++, kind: 'gong', award: rt[i] }); }
+    for (const [c, r] of empties) if (rng() < p) { occ[c][r] = nid; lands.push({ c, r, id: nid++, kind: 'coin' }); }
+    lands.sort((a, b) => a.c - b.c || a.r - b.r);
+    const merges = []; nid = resolveLines(occ, rng, nid, merges); nm += merges.length;
+    steps.push({ lands, merges, award: rt[i] || 0 });
+  }
+  return { start: { lands: lands0, merges: m0 }, steps, nMerges: nm };
+}
+function finalizeHold(st, landed, vals, N, S0) {
+  const v = {}; landed.forEach((l, k) => { v[l.id] = vals[k]; });
+  const occ = grid3(-1);
+  const play = s => {
+    s.lands.forEach(l => { occ[l.c][l.r] = l.id; });
+    const merges = s.merges.map(m => {
+      v[m.id] = m.parents.reduce((a, q) => a + v[q], 0);
+      m.cells.forEach(([c, r]) => { occ[c][r] = -1; }); occ[m.target[0]][m.target[1]] = m.id;
+      return { type: m.type, index: m.index, cells: m.cells, target: m.target, value: v[m.id] };
+    });
+    return { lands: s.lands.map(l => ({ position: [l.c, l.r], value: v[l.id], kind: l.kind, award: l.award || 0 })), merges, board: occ.map(col => col.map(id => id >= 0 ? v[id] : 0)) };
+  };
+  const start = play(st.start), steps = st.steps.map(s => ({ ...play(s), award: s.award }));
+  const total = steps[steps.length - 1].board.flat().reduce((a, b) => a + b, 0);
+  return { N, S0, start, steps, total, coins: landed.length, merges: st.nMerges };
+}
+function buildHold(rng, N, S0, startPos) {
+  const plan = HR_PLANS[Math.max(0, planIdx(HR_PLANS, N))];
+  let fallback = null;
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const st = holdStructure(rng, N, S0, startPos);
+    if (st.nMerges < 1 && attempt < 399) continue;   // every Hold & Respin shows at least one merge
+    const landed = [...st.start.lands, ...st.steps.flatMap(s => s.lands)];
+    for (let k = 0; k < 40; k++) {
+      const X = plan.prize[0] + Math.pow(rng(), 1.5) * (plan.prize[1] - plan.prize[0]);
+      const raw = landed.map(() => HOLD_V[pickW(rng, HOLD_V.map(x => x[1]))][0]);
+      const f = X / raw.reduce((a, b) => a + b, 0), vals = raw.map(x => nearestNice(x * f));
+      const tot = vals.reduce((a, b) => a + b, 0);
+      if (!fallback || Math.abs(tot - X) < fallback.d) fallback = { st, landed, vals, d: Math.abs(tot - X) };
+      if (tot >= plan.prize[0] && tot <= plan.prize[1]) return finalizeHold(st, landed, vals, N, S0);
+    }
+  }
+  return finalizeHold(fallback.st, fallback.landed, fallback.vals, N, S0);
+}
+
 function scriptSpin(state, rng, opts = {}) {
   if (state.fs) return scriptFS(state, rng);
+  if (state.hold) return scriptHold(state, rng);
   const bet = state.bet, lineBet = bet / 5, res = { bet_amount: bet };
-  state.gong = Math.min(state.gong, SCRIPT_GONG_MAX);
+  if (state.jade == null) state.jade = GONG_MIN;
+  state.gong = Math.min(state.gong, SCRIPT_GONG_MAX); state.jade = Math.min(state.jade, SCRIPT_GONG_MAX);
   if (!state.script || state.script.idx >= CYCLE) newCycle(state, rng);
   const sc = state.script, i = sc.idx;
-  if (opts.force === 'fs' && sc.types[i] !== 'trigger') {
+  const want = opts.force === 'fs' ? 'red' : opts.force === 'hr' ? 'green' : null;
+  if (want && !(sc.types[i] === 'trigger' && sc.colour === want)) {
     if (!sc.triggered && sc.trigI > i) {
-      const ti = sc.trigI; [sc.types[i], sc.types[ti]] = [sc.types[ti], sc.types[i]]; [sc.scat[i], sc.scat[ti]] = [sc.scat[ti], sc.scat[i]]; sc.trigI = i;
-    } else { sc.types[i] = 'trigger'; sc.scat[i] = 3; sc.trigI = i; sc.triggered = false; sc.plan = planFeature(state, rng); sc.extra = true; }
+      const ti = sc.trigI;
+      [sc.types[i], sc.types[ti]] = [sc.types[ti], sc.types[i]]; [sc.scat[i], sc.scat[ti]] = [sc.scat[ti], sc.scat[i]]; [sc.cols[i], sc.cols[ti]] = [sc.cols[ti], sc.cols[i]];
+      sc.trigI = i;
+    } else { sc.types[i] = 'trigger'; sc.scat[i] = 3; sc.trigI = i; sc.triggered = false; sc.extra = true; }
+    sc.colour = want; sc.cols[i] = [want, want, want]; sc.plan = planFeature(state, rng, want);
   }
-  const type = sc.types[i], tease = opts.force === 'tease' && type !== 'trigger', nScat = tease ? 2 : sc.scat[i];
+  const type = sc.types[i], tease = opts.force === 'tease' && type !== 'trigger';
+  if (tease) { const cc = rng() < 0.5 ? 'red' : 'green'; sc.cols[i] = [cc, cc]; sc.scat[i] = 2; }
+  const cols = sc.cols[i];
   state.balance -= bet;
-  const g = baseGrid(rng, nScat, type, tease);
+  const g = baseGrid(rng, cols, type, tease);
   const wins = evalLines(g.m, lineBet), lineWin = wins.reduce((a, w) => a + w.amount, 0);
-  const before = state.gong, incs = scriptIncs(state, rng, nScat);
-  incs.forEach(v => { state.gong = Math.min(SCRIPT_GONG_MAX, state.gong + v); });
+  const before = { gong: state.gong, jade: state.jade }, incs = scriptIncs(state, rng, cols);
+  incs.forEach((v, k) => { const key = COLOURS[cols[k]].key; state[key] = Math.min(SCRIPT_GONG_MAX, state[key] + v); });
+  const incOf = c => incs.filter((v, k) => cols[k] === c);
   res.reel_matrix = g.m; res.win_breakdown = wins;
   res.scatter_count = g.sp.length; res.scatter_positions = g.sp;
-  res.gong_state = { before, increments: incs, after: state.gong };
-  res.free_spins_trigger = type === 'trigger';
+  res.scatters = g.sp.map((p, k) => ({ position: p, colour: cols[k], increment: incs[k] }));
+  res.gong_state = { before: before.gong, increments: incOf('red'), after: state.gong };
+  res.jade_state = { before: before.jade, increments: incOf('green'), after: state.jade };
+  res.free_spins_trigger = type === 'trigger' && sc.colour === 'red';
+  res.hold_trigger = type === 'trigger' && sc.colour === 'green';
   if (res.free_spins_trigger) {
     sc.triggered = true;
     const S0 = state.gong, N = Math.max(sc.plan.N, S0 + 1), f = buildFeature(rng, N, S0);
@@ -543,12 +668,41 @@ function scriptSpin(state, rng, opts = {}) {
     state.fs = { spins_left: S0, spins_total: S0, wild_count: 0, tier: -1, feature_win: 0, script: f, i: 0 };
     state.gong = GONG_MIN; res.gong_state.reset_to = GONG_MIN;
   }
+  if (res.hold_trigger) {
+    sc.triggered = true;
+    const S0 = state.jade, N = Math.max(sc.plan.N, S0 + 1), f = buildHold(rng, N, S0, g.sp);
+    const X = x => x * bet;
+    res.hold_awarded = S0;
+    res.hold_start = { coins: f.start.lands.map(l => ({ ...l, value: X(l.value) })), merges: f.start.merges.map(m => ({ ...m, value: X(m.value) })), board: f.start.board.map(col => col.map(X)) };
+    state.hold = { spins_left: S0, spins_total: S0, script: f, i: 0, board: res.hold_start.board };
+    state.jade = GONG_MIN; res.jade_state.reset_to = GONG_MIN;
+  }
   state.balance += lineWin; res.win_amount = lineWin;
-  res.script = { cycle: sc.n, cycle_spin: i + 1, of: CYCLE, type, scatter_spin: nScat > 0 };
+  res.script = { cycle: sc.n, cycle_spin: i + 1, of: CYCLE, type, scatter_spin: cols.length > 0, cycle_feature: sc.colour === 'red' ? 'free_spins' : 'hold_and_respin' };
   if (res.free_spins_trigger) res.script.feature_plan = { total_spins: state.fs.script.N, start_spins: state.fs.script.S0, prize_x_bet: +state.fs.script.total.toFixed(2), quick_hit: state.fs.script.mult };
+  if (res.hold_trigger) res.script.feature_plan = { total_spins: state.hold.script.N, start_spins: state.hold.script.S0, prize_x_bet: state.hold.script.total, coins: state.hold.script.coins, merges: state.hold.script.merges };
   sc.idx++;
   res.free_spin_state = state.fs ? publicFS(state.fs) : null;
-  res.gong_meter = state.gong; res.balance = state.balance;
+  res.hold_state = state.hold ? publicHold(state.hold) : null;
+  res.gong_meter = state.gong; res.jade_meter = state.jade; res.balance = state.balance;
+  return res;
+}
+function publicHold(h) { return { spins_left: h.spins_left, spins_total: h.spins_total, respins_played: h.i, board: h.board }; }
+function scriptHold(state, rng) {
+  const h = state.hold, bet = state.bet, f = h.script, st = f.steps[h.i++], X = x => x * bet;
+  const res = { bet_amount: bet, win_amount: 0 };
+  h.spins_left -= 1;
+  if (st.award) { h.spins_left += st.award; h.spins_total += st.award; }
+  res.hold_spin = { respin: h.i, lands: st.lands.map(l => ({ ...l, value: X(l.value) })), merges: st.merges.map(m => ({ ...m, value: X(m.value) })), award: st.award };
+  h.board = st.board.map(col => col.map(X)); res.board = h.board;
+  if (h.spins_left <= 0) {
+    const total = Math.min(X(f.total), bet * MAX_WIN_X);
+    state.balance += total;
+    res.hold_complete = { total, x_bet: f.total, coins: h.board.flat().filter(v => v > 0).length, spins_played: h.spins_total };
+    state.hold = null;
+  }
+  res.hold_state = state.hold ? publicHold(state.hold) : null;
+  res.free_spin_state = null; res.gong_meter = state.gong; res.jade_meter = state.jade; res.balance = state.balance;
   return res;
 }
 function publicFS(fs) { const { script, i, ...pub } = fs; return { ...pub, multiplier: fs.tier >= 0 ? TIERS[fs.tier].mult : 1 }; }
@@ -584,7 +738,7 @@ const fmt = n => Math.round(n).toLocaleString('en-US');
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const NAMES = ['J', 'Q', 'K', 'A', 'JADE INGOT', 'LANTERN', 'GOLDEN DRAGON', 'PHOENIX', 'GONG'];
+const NAMES = ['J', 'Q', 'K', 'A', 'JADE INGOT', 'LANTERN', 'GOLDEN DRAGON', 'PHOENIX', 'RED GONG', 'GREEN GONG', 'COIN'];
 const BETS = [10, 20, 50, 100, 200, 500, 1000];
 const DENOMS = [0.01, 0.02, 0.05, 0.10, 0.25, 1.00];
 $('bg').style.backgroundImage = `url(${KEYART})`;
@@ -841,8 +995,10 @@ const SND = (() => {
       this.noise({ t, d: 0.03, v: 0.15, f: 2000, q: 1.2, pan });
       if (this.spinN) { const g = this.spinN.g.gain; this.hold(g, t); g.setTargetAtTime(0.07 * (2 - c) / 3, t, 0.05); }
     },
-    scatterLand(n) {
-      if (!this.ac) return; const t = this.t(), f = [220, 294, 370][n] || 370, pan = (n - 1) * 0.35;
+    scatterLand(n, colour) {
+      // green Gongs ring a fourth higher and brighter than red ones
+      if (!this.ac) return; const t = this.t(), f = ([220, 294, 370][n] || 370) * (colour === 'green' ? 1.335 : 1), pan = (n - 1) * 0.35;
+      if (colour === 'green') this.bell(f * 6, t + 0.06, 0.04, 1.2, { lite: true, pan: -pan });
       this.gongHit(f, 2.2 + n * 0.6, 0.4 + n * 0.1, { rise: true, lite: true, wet: 0.4, pan });
       this.bell(f * 4, t + 0.03, 0.05 + n * 0.02, 1.4, { pan });
       if (n === 2) { this.cymbal(t, 0.12, 2.2); this.taiko(t, 0.6); this.gliss(t + 0.05, 62, 0, 12, 1, 0.2, 0.024); }
@@ -874,20 +1030,20 @@ const SND = (() => {
     },
     gongCollect(i = 0, o = {}) {
       // a Scatter slams into the Gong collector; each one in the same spin hits harder and higher
-      if (!this.ac) return; const t = this.t(), lv = Math.min(i, 2), f0 = [147, 165, 185][lv];
+      if (!this.ac) return; const t = this.t(), lv = Math.min(i, 2), gr = o.colour === 'green', f0 = [147, 165, 185][lv] * (gr ? 1.335 : 1), up = gr ? 5 : 0;
       this.gongHit(f0, 3.4 + lv * 0.8, 0.46 + lv * 0.09, { fall: true, bloom: true, wet: 0.5 });
       this.gongHit(f0 * 2.02, 1.5 + lv * 0.3, 0.16 + lv * 0.04, { rise: true, lite: true, t: t + 0.012, pan: 0.3 });
       this.tone({ t, f: 72, f2: 36, glide: 0.25, d: 0.8, v: 0.3 + lv * 0.08 });
       this.taiko(t, 0.42 + lv * 0.13);
       this.cymbal(t + 0.005, 0.045 + lv * 0.03, 1.3 + lv * 0.5);
-      const n = 5 + lv * 3; for (let k = 0; k < n; k++) this.bell(mtof(pent(74 + lv * 2, k)), t + 0.05 + k * 0.04, 0.055 * (1 - k / (n * 1.6)), 1.3, { lite: true, pan: -0.6 + 1.2 * k / n, wet: 0.5 });
-      this.gliss(t + 0.03, 62 + lv * 2, 0, 6 + lv * 3, 1, 0.2, 0.025, { d: 1.2 });
-      if (o.trigger && lv === 2) { this.taiko(t + 0.12, 0.6); this.gongHit(98, 4, 0.35, { t: t + 0.12, bloom: true, fall: true }); }
+      const n = 5 + lv * 3; for (let k = 0; k < n; k++) this.bell(mtof(pent(74 + lv * 2 + up, k)), t + 0.05 + k * 0.04, 0.055 * (1 - k / (n * 1.6)), 1.3, { lite: true, soft: gr, pan: -0.6 + 1.2 * k / n, wet: 0.5 });
+      this.gliss(t + 0.03, 62 + lv * 2 + up, 0, 6 + lv * 3, 1, 0.2, 0.025, { d: 1.2 });
+      if (o.trigger && lv === 2) { this.taiko(t + 0.12, 0.6); this.gongHit(gr ? 131 : 98, 4, 0.35, { t: t + 0.12, bloom: true, fall: true }); }
       this.duck(0.45, 0.9 + lv * 0.3);
     },
-    gongFly(dur, c = 1, i = 0) {
+    gongFly(dur, c = 1, i = 0, colour) {
       // rising whoosh + zheng tremolo that follows the Scatter from its reel to the Gong and peaks on impact
-      if (!this.ac) return; const ac = this.ac, t = this.t(), lv = Math.min(i, 2);
+      if (!this.ac) return; const ac = this.ac, t = this.t(), lv = Math.min(i, 2) + (colour === 'green' ? 2.5 : 0);
       const s = ac.createBufferSource(); s.buffer = this.nbuf; s.loop = true;
       const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2.2; f.frequency.setValueAtTime(500 + lv * 150, t); f.frequency.exponentialRampToValueAtTime(3600 + lv * 700, t + dur);
       const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.08 + lv * 0.02, t + dur * 0.88); g.gain.linearRampToValueAtTime(0, t + dur + 0.03);
@@ -897,33 +1053,35 @@ const SND = (() => {
       const k = Math.max(4, Math.round(dur / 0.055));
       for (let j = 0; j < k; j++) this.zheng(t + j * dur / k, pent(62 + lv * 2, j), 0.06 + 0.1 * j / k, { d: 0.45, pan: (c - 1) * 0.5 * (1 - j / k) });
     },
-    trigger() {
-      // 3 Gongs: gong roll -> KUANG -> Chinese opera luogu flourish (small gong / nao-bo cymbals) -> drum roll into the award
-      if (!this.ac) return; const ac = this.ac, t = this.t(), K = t + 0.5;
+    trigger(colour) {
+      // 3 Gongs: gong roll -> KUANG -> Chinese opera luogu flourish (small gong / nao-bo cymbals) -> drum roll into the award.
+      // Green (Hold & Respin) is pitched up with a jade-bell shower instead of the low bell run.
+      if (!this.ac) return; const ac = this.ac, t = this.t(), K = t + 0.5, gr = colour === 'green', pk = gr ? 1.19 : 1;
       this.duck(0.06, 3.6);
       // 0 – 0.5s: tam-tam roll swelling + accelerating taiko + riser
       [380, 900, 2200, 4200].forEach((fr, i) => this.noise({ t, a: 0.48, d: 0.25, v: 0.07 - i * 0.01, f: fr, q: 7, wet: 0.5, pan: (i - 1.5) * 0.3 }));
       this.noise({ t, a: 0.5, d: 0.15, v: 0.08, f: 700, f2: 7000, glide: 0.5, q: 1 });
       for (let i = 0; i < 9; i++) { const u = i / 9; this.taiko(t + 0.48 * (1 - (1 - u) * (1 - u)), 0.15 + 0.4 * u, { d: 0.3 }); }
       // KUANG — the giant gong
-      this.gongHit(55, 9, 0.95, { t: K, bloom: true, fall: true });
-      this.gongHit(82, 6.5, 0.5, { t: K + 0.015, bloom: true, fall: true, pan: 0.15 });
+      this.gongHit(55 * pk, 9, 0.95, { t: K, bloom: true, fall: true });
+      this.gongHit(82 * pk, 6.5, 0.5, { t: K + 0.015, bloom: true, fall: true, pan: 0.15 });
+      if (gr) for (let k = 0; k < 12; k++) this.bell(mtof(pent(93, (k * 2) % 9)), K + 0.1 + k * 0.07, 0.05, 1.6, { soft: true, pan: Math.sin(k * 1.7) * 0.7, wet: 0.65 });
       this.tone({ t: K, f: 52, f2: 28, glide: 0.6, d: 2.2, v: 0.5 });
       this.taiko(K, 1); this.taiko(K + 0.06, 0.6, { f: 0.8 });
       this.cymbal(K, 0.2, 3.4); this.cymbal(K + 0.02, 0.12, 2.6, { pan: 0.4 });
       this.gliss(K + 0.02, 38, 0, 22, 1, 0.3, 0.02, { d: 2 });
-      for (let k = 0; k < 10; k++) this.bell(mtof(pent(86, k)), K + 0.25 + k * 0.05, 0.055 * (1 - k / 16), 2, { lite: true, pan: -0.7 + k * 0.14, wet: 0.6 });
+      for (let k = 0; k < 10; k++) this.bell(mtof(pent(gr ? 91 : 86, k)), K + 0.25 + k * 0.05, 0.055 * (1 - k / 16), 2, { lite: true, pan: -0.7 + k * 0.14, wet: 0.6 });
       // luogu flourish: tai (small opera gong, pitch rises) / qi (nao-bo, choked crash)
       const tai = (tt, f, v) => { this.gongHit(f, 1.4, v, { t: tt, rise: true, lite: true, pan: 0.25 }); this.drum(tt, v * 0.6); };
       const qi = (tt, v) => { this.cymbal(tt, v, 0.42, { pan: -0.3 }); this.noise({ t: tt, d: 0.08, v: v * 1.2, f: 2600, q: 1.4, pan: -0.3 }); };
-      tai(K + 0.3, 330, 0.34); tai(K + 0.48, 330, 0.3); qi(K + 0.66, 0.16); tai(K + 0.84, 392, 0.38); qi(K + 1.02, 0.18);
-      this.gongHit(98, 3.2, 0.5, { t: K + 1.2, bloom: true, fall: true, lite: true }); this.taiko(K + 1.2, 0.8); qi(K + 1.2, 0.14);
+      tai(K + 0.3, 330 * pk, 0.34); tai(K + 0.48, 330 * pk, 0.3); qi(K + 0.66, 0.16); tai(K + 0.84, 392 * pk, 0.38); qi(K + 1.02, 0.18);
+      this.gongHit(98 * pk, 3.2, 0.5, { t: K + 1.2, bloom: true, fall: true, lite: true }); this.taiko(K + 1.2, 0.8); qi(K + 1.2, 0.14);
       // tanggu drum roll building into the award hit (~2.12s after the call)
       for (let i = 0; i < 14; i++) { const u = i / 14; this.drum(K + 1.3 + 0.32 * (1 - (1 - u) * (1 - u)), 0.08 + 0.22 * u); }
     },
-    award() {
-      if (!this.ac) return; const t = this.t();
-      this.gongHit(98, 4.5, 0.6, { bloom: true, fall: true }); this.gongHit(196, 2, 0.25, { rise: true, lite: true, t: t + 0.01, pan: -0.25 });
+    award(colour) {
+      if (!this.ac) return; const t = this.t(), pk = colour === 'green' ? 1.19 : 1;
+      this.gongHit(98 * pk, 4.5, 0.6, { bloom: true, fall: true }); this.gongHit(196 * pk, 2, 0.25, { rise: true, lite: true, t: t + 0.01, pan: -0.25 });
       this.taiko(t, 0.85); this.cymbal(t, 0.14, 2.6); this.gliss(t + 0.02, 50, 0, 16, 1, 0.26, 0.028, { d: 1.6 });
       [0, 2, 4, 5].forEach((d, k) => this.bell(mtof(pent(74, d)), t + 0.1 + k * 0.09, 0.06, 2.2, { soft: true, pan: (k - 1.5) * 0.3 })); this.shimmer(0.5, 0.05);
       let tt = t + 0.45; [[81, 0.14], [83, 0.14], [86, 0.7]].forEach(([m, d]) => { this.dizi(tt, m, d, 0.17, { pan: 0, wet: 0.5 }); tt += d; });
@@ -936,6 +1094,45 @@ const SND = (() => {
       this.gliss(t + 0.02, 62, 0, 8 + n * 2, 1, 0.22, 0.025, { d: 1.2 });
       for (let k = 0; k < n; k++) { const tt = t + 0.38 + k * 0.17; this.bell(mtof(pent(86, k * 2)), tt, 0.08, 1.8, { soft: true, pan: (k - (n - 1) / 2) * 0.4 }); this.zheng(tt, pent(74, k * 2), 0.32); this.taiko(tt, 0.3, { f: 1.2, d: 0.4 }); }
       this.duck(0.45, 1.6);
+    },
+    // ---- Hold & Respin cues
+    hrSpin() {
+      if (!this.ac) return; const t = this.t();
+      this.noise({ t, a: 0.04, d: 0.22, v: 0.07, f: 600, f2: 2400, glide: 0.2, q: 1 });
+      this.tone({ t, f: 1180, f2: 980, glide: 0.04, type: 'triangle', d: 0.05, v: 0.06, pan: -0.2 });
+      this.tone({ t, f: 120, f2: 70, glide: 0.08, d: 0.18, v: 0.16 });
+    },
+    cellStop(empty) {
+      if (!this.ac) return; const t = this.t();
+      this.tone({ t, f: empty ? 520 : 640, f2: empty ? 480 : 600, glide: 0.03, type: 'triangle', d: 0.05, v: empty ? 0.045 : 0.07, wet: 0.08 });
+    },
+    coinLand(n = 0, special) {
+      // each coin in a respin lands one pentatonic step higher
+      if (!this.ac) return; const t = this.t(), m = pent(74, Math.min(n, 9)), pan = clamp((n - 2) * 0.25, -0.6, 0.6);
+      this.coin(t, 0.11, 2600 + n * 120); this.coin(t + 0.03, 0.07, 3300 + n * 120);
+      this.zheng(t, m, 0.36, { pan }); this.zheng(t + 0.05, m + 12, 0.16, { pan });
+      this.tone({ t, f: 95, f2: 55, glide: 0.1, d: 0.25, v: 0.22 });
+      if (special) this.bell(mtof(m + 12), t + 0.04, 0.06, 1.4, { soft: true, pan });
+    },
+    mergeCharge() {
+      // a full row or column: coins tremble and charge up
+      if (!this.ac) return; const ac = this.ac, t = this.t(), d = 0.5;
+      this.noise({ t, a: d, d: 0.08, v: 0.09, f: 900, f2: 6000, glide: d, q: 3, wet: 0.4 });
+      for (let k = 0; k < 10; k++) this.zheng(t + k * d / 10, pent(69, k), 0.08 + 0.16 * k / 10, { d: 0.5, pan: Math.sin(k) * 0.4 });
+      for (let k = 0; k < 6; k++) this.coin(t + k * 0.07, 0.05, 3000 + k * 250);
+    },
+    merge(k = 0) {
+      // the three coins slam into one: gong + taiko + crash + rising chord; chained merges climb
+      if (!this.ac) return; const t = this.t(), up = Math.min(k, 3) * 2;
+      this.gongHit(123 * Math.pow(2, up / 12), 3.2, 0.5, { bloom: true, fall: true });
+      this.taiko(t, 0.8); this.tone({ t, f: 60, f2: 32, glide: 0.4, d: 1.2, v: 0.35 }); this.cymbal(t, 0.12 + k * 0.03, 2);
+      [0, 4, 7, 12].forEach((d, i) => this.bell(mtof(74 + up + d), t + 0.05 + i * 0.035, 0.06, 2, { soft: true, pan: (i - 1.5) * 0.35 }));
+      this.gliss(t + 0.02, 62 + up, 0, 10, 1, 0.24, 0.024, { d: 1.2 });
+      this.coinBurst(8, 0.6); this.duck(0.4, 1.4);
+    },
+    hrCollect(i = 0) {
+      if (!this.ac) return; const t = this.t(), m = pent(74, Math.min(i, 12));
+      this.coin(t, 0.1, 2600 + i * 90); this.zheng(t, m, 0.3); this.bell(mtof(m + 12), t + 0.02, 0.045, 1.2, { lite: true, pan: Math.sin(i) * 0.5 });
     },
     gongAdd(inc) {
       if (!this.ac) return; const t = this.t() + 0.08;
@@ -1013,8 +1210,8 @@ const SND = (() => {
     sched() {
       const ac = this.ac; if (!ac || ac.state !== 'running') return;
       const now = ac.currentTime; if (this.mT < now - 0.2) this.mT = now + 0.05;
-      const fs = this.mode === 'fs', sd = fs ? 60 / 112 / 4 : 60 / 78 / 4;
-      while (this.mT < now + 0.3) { this.step16(this.mT, this.mStep, sd, fs); this.mT += sd; this.mStep++; }
+      const md = this.mode, fs = md === 'fs', hr = md === 'hr', sd = fs ? 60 / 112 / 4 : hr ? 60 / 96 / 4 : 60 / 78 / 4;
+      while (this.mT < now + 0.3) { this.step16(this.mT, this.mStep, sd, fs, hr); this.mT += sd; this.mStep++; }
     },
     mel(t, notes, st, sd, tr, v) {
       let p = 0;
@@ -1023,8 +1220,23 @@ const SND = (() => {
         p += len; if (p > st) return;
       }
     },
-    step16(t, s, sd, fs) {
+    step16(t, s, sd, fs, hr) {
       const st = s % 16, bar = (s / 16) | 0, ch = CHORDS[bar % 4], sec = ((bar / 4) | 0) % 4, loop = (bar / 16) | 0;
+      if (hr) {
+        // Hold & Respin: 96 bpm, a tone down (C), held breath. Ticking woodblocks, heartbeat taiko, low pulse, sparse zheng, jade bells
+        const tr = -2, pickup = bar % 4 === 3 && st >= 12;
+        if (st % 2 === 0) this.wood(t, st % 4 === 0 ? 0.05 : 0.032, st % 4 !== 0, true);
+        if (st === 0 || st === 3) this.taiko(t, st === 0 ? 0.34 : 0.2, { mus: true, d: 0.55 });
+        if (st === 8 && bar % 2) this.taiko(t, 0.24, { mus: true, d: 0.45, f: 1.1 });
+        if (st === 0 || st === 8) { this.zheng(t, ch.bass + tr, 0.26, { mus: true, pan: -0.2, d: 1.4 }); this.tone({ t, f: mtof(ch.bass + tr), d: 1.1, v: 0.085, mus: true }); }
+        if (!pickup && st % 4 === 2) this.zheng(t, ch.arp[[3, 4, 5, 4][(st / 4) | 0]] + tr, 0.12, { mus: true, d: 0.9 });
+        if (pickup && st === 12) this.gliss(t, 62 + tr, 0, 6, 1, 0.1, sd * 0.6, { mus: true, d: 1 });
+        if (sec >= 1 && st % 2 === 1) this.shaker(t, 0.018, true);
+        if (st === 0) this.pad(t, ch.pad.map(m => m + tr), sd * 16, 0.026);
+        if (st === 8 && bar % 2 === 0) this.bell(mtof(pent(84 + tr, (bar / 2) % 5)), t, 0.03, 2.2, { mus: true, soft: true });
+        if (sec === 3) this.mel(t, MEL.A[bar % 4], st, sd, tr - 12, 0.12);
+        return;
+      }
       if (!fs) {
         const tt = t + (st % 2 ? sd * 0.1 : 0);
         const pickup = bar % 4 === 3 && sec !== 0 && st >= 12;
@@ -1069,40 +1281,48 @@ function goldG(c, x0, y0, x1, y1) { const g = c.createLinearGradient(x0, y0, x1,
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 function glow(c, x, y, r, col) { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); }
 
-function drawGongDisc(c, cx, cy, r, plain) {
+// Gong palettes: both discs are gold; red (Free Spins) and green (Hold & Respin) show in the stand, banner, ribbon, centre gem and glow
+const GOLD_DISC = ['#fff4c0', '#f0b445', '#b06a1c', '#5a2e06'];
+const GPAL = {
+  red: { disc: GOLD_DISC, glow: 'rgba(255, 120, 70, .42)', line: 'rgba(80, 38, 4, .55)', glyph: 'rgba(90, 40, 4, .7)', boss: ['#ffe2d8', '#ff4a3a', '#8a0a10'], soft: 'rgba(255, 246, 205, .7)',
+    post: ['#5a0810', '#c41e2a', '#4a060c'], bar: ['#d8222e', '#6a0a12'], rib: ['#d8222e', '#7c0c15', '#6a0710'], banner: '鴻 運 當 頭', fx: 'rgba(255, 180, 140, ', spark: '#ffb48c' },
+  green: { disc: GOLD_DISC, glow: 'rgba(80, 235, 155, .42)', line: 'rgba(80, 38, 4, .55)', glyph: 'rgba(90, 40, 4, .7)', boss: ['#eafff2', '#46d394', '#0a5a32'], soft: 'rgba(255, 246, 205, .7)',
+    post: ['#06341f', '#159158', '#042a18'], bar: ['#17a362', '#0a4a2b'], rib: ['#18a062', '#0a5532', '#063d22'], banner: '金 玉 滿 堂', fx: 'rgba(140, 255, 195, ', spark: '#a0ffcc' },
+};
+function drawGongDisc(c, cx, cy, r, plain, pal = GPAL.red) {
   c.save();
-  glow(c, cx, cy, r * 1.35, 'rgba(255, 200, 90, .35)');
+  glow(c, cx, cy, r * 1.35, pal.glow);
   c.shadowColor = 'rgba(0,0,0,.55)'; c.shadowBlur = r * .12; c.shadowOffsetY = r * .05;
   let g = c.createRadialGradient(cx - r * .3, cy - r * .35, r * .1, cx, cy, r);
-  g.addColorStop(0, '#fff4c0'); g.addColorStop(.35, '#f0b445'); g.addColorStop(.75, '#b06a1c'); g.addColorStop(1, '#5a2e06');
+  g.addColorStop(0, pal.disc[0]); g.addColorStop(.35, pal.disc[1]); g.addColorStop(.75, pal.disc[2]); g.addColorStop(1, pal.disc[3]);
   c.fillStyle = g; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
   c.shadowColor = 'transparent';
   c.lineWidth = r * .07; c.strokeStyle = goldG(c, cx - r, cy - r, cx + r, cy + r); c.beginPath(); c.arc(cx, cy, r * .96, 0, 7); c.stroke();
-  c.lineWidth = r * .02; c.strokeStyle = 'rgba(70, 30, 3, .7)'; c.beginPath(); c.arc(cx, cy, r * .91, 0, 7); c.stroke();
-  [.86, .66].forEach(k => { c.strokeStyle = 'rgba(80, 38, 4, .55)'; c.lineWidth = r * .018; c.beginPath(); c.arc(cx, cy, r * k, 0, 7); c.stroke(); c.strokeStyle = 'rgba(255, 240, 190, .35)'; c.beginPath(); c.arc(cx, cy + r * .012, r * k, 0, 7); c.stroke(); });
-  c.strokeStyle = 'rgba(90, 42, 5, .5)'; c.lineWidth = r * .012;
+  c.lineWidth = r * .02; c.strokeStyle = pal.line; c.beginPath(); c.arc(cx, cy, r * .91, 0, 7); c.stroke();
+  [.86, .66].forEach(k => { c.strokeStyle = pal.line; c.lineWidth = r * .018; c.beginPath(); c.arc(cx, cy, r * k, 0, 7); c.stroke(); c.strokeStyle = 'rgba(255, 240, 190, .35)'; c.beginPath(); c.arc(cx, cy + r * .012, r * k, 0, 7); c.stroke(); });
+  c.strokeStyle = pal.line; c.lineWidth = r * .012;
   for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a) * r * .68, cy + Math.sin(a) * r * .68); c.lineTo(cx + Math.cos(a) * r * (i % 2 ? .76 : .84), cy + Math.sin(a) * r * (i % 2 ? .76 : .84)); c.stroke(); }
   if (!plain) {
-    c.fillStyle = 'rgba(90, 40, 4, .7)'; c.font = `${r * .26}px "Ma Shan Zheng", serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = pal.glyph; c.font = `${r * .26}px "Ma Shan Zheng", serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
     ['福', '祿', '壽', '喜'].forEach((ch, i) => { const a = -Math.PI / 2 + i * Math.PI / 2; c.fillText(ch, cx + Math.cos(a) * r * .5, cy + Math.sin(a) * r * .5); });
-    g = c.createRadialGradient(cx - r * .08, cy - r * .1, 0, cx, cy, r * .3); g.addColorStop(0, '#fffbe0'); g.addColorStop(.5, '#ffcf55'); g.addColorStop(1, '#a8661a');
+    g = c.createRadialGradient(cx - r * .08, cy - r * .1, 0, cx, cy, r * .3); g.addColorStop(0, pal.boss[0]); g.addColorStop(.5, pal.boss[1]); g.addColorStop(1, pal.boss[2]);
     c.fillStyle = g; c.beginPath(); c.arc(cx, cy, r * .27, 0, 7); c.fill();
-    c.strokeStyle = 'rgba(90, 40, 4, .6)'; c.lineWidth = r * .02; c.stroke();
+    c.strokeStyle = pal.line; c.lineWidth = r * .02; c.stroke();
     glow(c, cx, cy, r * .45, 'rgba(255, 250, 210, .45)');
   } else {
-    g = c.createRadialGradient(cx, cy, 0, cx, cy, r * .62); g.addColorStop(0, 'rgba(255, 246, 205, .7)'); g.addColorStop(1, 'rgba(255, 220, 140, 0)');
+    g = c.createRadialGradient(cx, cy, 0, cx, cy, r * .62); g.addColorStop(0, pal.soft); g.addColorStop(1, 'rgba(255, 255, 255, 0)');
     c.fillStyle = g; c.beginPath(); c.arc(cx, cy, r * .62, 0, 7); c.fill();
   }
   c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.ellipse(cx - r * .38, cy - r * .42, r * .25, r * .1, -.7, 0, 7); c.fill();
   c.restore();
 }
 
-function ribbon(c, y, h, text, size) {
+function ribbon(c, y, h, text, size, pal = GPAL.red) {
   c.save();
-  c.fillStyle = '#6a0710';
+  c.fillStyle = pal.rib[2];
   c.beginPath(); c.moveTo(18, y + 6); c.lineTo(52, y + 6); c.lineTo(52, y + h + 6); c.lineTo(18, y + h + 6); c.lineTo(32, y + h / 2 + 6); c.closePath(); c.fill();
   c.beginPath(); c.moveTo(282, y + 6); c.lineTo(248, y + 6); c.lineTo(248, y + h + 6); c.lineTo(282, y + h + 6); c.lineTo(268, y + h / 2 + 6); c.closePath(); c.fill();
-  const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#d8222e'); g.addColorStop(1, '#7c0c15');
+  const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, pal.rib[0]); g.addColorStop(1, pal.rib[1]);
   c.fillStyle = g; rr(c, 38, y, 224, h, 8); c.fill(); c.lineWidth = 3; c.strokeStyle = '#f2c14e'; c.stroke();
   c.font = `900 ${size}px Cinzel, Georgia, serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
   c.lineWidth = 6; c.strokeStyle = '#3a0505'; c.strokeText(text, 150, y + h / 2 + 2);
@@ -1110,13 +1330,14 @@ function ribbon(c, y, h, text, size) {
   c.restore();
 }
 
-function drawScatter(c) {
+function drawScatter(c, colour = 'red') {
+  const pal = GPAL[colour];
   c.save(); c.lineCap = 'round';
-  const bar = c.createLinearGradient(0, 18, 0, 42); bar.addColorStop(0, '#c41e2a'); bar.addColorStop(1, '#5a0810');
+  const bar = c.createLinearGradient(0, 18, 0, 42); bar.addColorStop(0, pal.post[1]); bar.addColorStop(1, pal.post[0]);
   c.fillStyle = bar; rr(c, 34, 18, 232, 20, 6); c.fill(); c.fillStyle = goldG(c, 0, 14, 0, 42); rr(c, 22, 14, 28, 28, 6); c.fill(); rr(c, 250, 14, 28, 28, 6); c.fill();
   c.strokeStyle = '#d9a640'; c.lineWidth = 5; c.beginPath(); c.moveTo(112, 36); c.lineTo(122, 62); c.moveTo(188, 36); c.lineTo(178, 62); c.stroke();
-  drawGongDisc(c, 150, 140, 96, false);
-  ribbon(c, 232, 46, 'SCATTER', 31);
+  drawGongDisc(c, 150, 140, 96, false, pal);
+  ribbon(c, 232, 46, 'SCATTER', 31, pal);
   c.restore();
 }
 
@@ -1289,9 +1510,42 @@ function drawLetter(c, ch, seed) {
   c.restore();
 }
 
+// Hold & Respin coins: Chinese cash coin, gold (landed), jade (merged), ruby (25x bet and up). Value drawn at render time.
+const CPAL = { gold: ['#fff6c8', '#f2b83a', '#a86a10', '#5a3404', 'rgba(255, 200, 80, .4)', '#5a3404'], jade: ['#eafff2', '#52d896', '#13804c', '#063a22', 'rgba(80, 240, 160, .55)', '#04301b'], ruby: ['#ffe2d2', '#ff6a4a', '#b0141f', '#4a0408', 'rgba(255, 90, 60, .6)', '#3a0304'] };
+function drawCoinBase(c, tier) {
+  const p = CPAL[tier]; c.save();
+  glow(c, 150, 150, 150, p[4]);
+  c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 14; c.shadowOffsetY = 6;
+  let g = c.createRadialGradient(118, 108, 10, 150, 150, 122); g.addColorStop(0, p[0]); g.addColorStop(.4, p[1]); g.addColorStop(.82, p[2]); g.addColorStop(1, p[3]);
+  c.fillStyle = g; c.beginPath(); c.arc(150, 150, 120, 0, 7); c.fill(); c.shadowColor = 'transparent';
+  c.lineWidth = 11; c.strokeStyle = goldG(c, 30, 30, 270, 270); c.beginPath(); c.arc(150, 150, 114, 0, 7); c.stroke();
+  c.lineWidth = 2.5; c.strokeStyle = 'rgba(40, 16, 2, .45)'; c.beginPath(); c.arc(150, 150, 92, 0, 7); c.stroke();
+  c.fillStyle = 'rgba(40, 16, 2, .38)'; c.font = '26px "Ma Shan Zheng", serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  ['福', '祿', '壽', '喜'].forEach((ch, i) => { const a = -Math.PI / 2 + i * Math.PI / 2; c.fillText(ch, 150 + Math.cos(a) * 103, 150 + Math.sin(a) * 103); });
+  g = c.createRadialGradient(150, 135, 4, 150, 150, 90); g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(150, 150, 90, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(104, 92, 34, 13, -.7, 0, 7); c.fill();
+  c.restore();
+}
+const COIN = {};
+function buildCoins() {
+  ['gold', 'jade', 'ruby'].forEach(k => { const img = mk(TS, TS), c = img.getContext('2d'); c.scale(TS / 300, TS / 300); drawCoinBase(c, k);
+    const blur = mk(TS, TS), b = blur.getContext('2d'); for (let j = -3; j <= 3; j++) { b.globalAlpha = j === 0 ? 0.4 : 0.18; b.drawImage(img, 0, j * 10); } COIN[k] = { img, blur }; });
+}
+const fmtShort = v => v >= 100000 ? (v / 1000).toFixed(0) + 'K' : v >= 10000 ? (v / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : fmt(v);
+const coinTier = (v, merged) => v >= BETS[G.betIdx] * 25 ? 'ruby' : merged ? 'jade' : 'gold';
+// centred coin with its value; used on the reel canvas and the FX layer
+function drawCoinFace(c, cx, cy, size, value, tier, alpha = 1) {
+  c.save(); c.globalAlpha = alpha; c.drawImage(COIN[tier].img, cx - size / 2, cy - size / 2, size, size);
+  const txt = fmtShort(value), fs = size * (txt.length <= 3 ? 0.27 : txt.length <= 5 ? 0.215 : 0.18);
+  c.font = `900 ${fs}px Cinzel, Georgia, serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.lineWidth = fs * 0.22; c.lineJoin = 'round'; c.strokeStyle = CPAL[tier][5]; c.strokeText(txt, cx, cy + fs * 0.06);
+  const g = c.createLinearGradient(0, cy - fs / 2, 0, cy + fs / 2); g.addColorStop(0, '#ffffff'); g.addColorStop(.55, '#fff3c4'); g.addColorStop(1, '#ffd36a');
+  c.fillStyle = g; c.fillText(txt, cx, cy + fs * 0.06); c.restore();
+}
+
 const TEX = [];
 function buildTextures() {
-  const draws = [c => drawLetter(c, 'J', 11), c => drawLetter(c, 'Q', 12), c => drawLetter(c, 'K', 13), c => drawLetter(c, 'A', 14), drawIngot, drawLantern, drawDragon, drawPhoenix, drawScatter];
+  const draws = [c => drawLetter(c, 'J', 11), c => drawLetter(c, 'Q', 12), c => drawLetter(c, 'K', 13), c => drawLetter(c, 'A', 14), drawIngot, drawLantern, drawDragon, drawPhoenix, c => drawScatter(c, 'red'), c => drawScatter(c, 'green'), c => drawCoinBase(c, 'gold')];
   draws.forEach((fn, i) => {
     const img = mk(TS, TS), c = img.getContext('2d'); c.scale(TS / 300, TS / 300); fn(c);
     const blur = mk(TS, TS), b = blur.getContext('2d');
@@ -1317,7 +1571,7 @@ function buildReelBg() {
   }
   c.fillStyle = 'rgba(242, 193, 78, .35)'; [CELL + GAP / 2, 2 * CELL + GAP * 1.5].forEach(x => c.fillRect(x - 1, 6, 2, RW - 12));
 }
-const fillerSym = base => { const r = Math.random(); if (base && r < 0.06) return S.SCATTER; return (Math.random() * 8) | 0; };
+const fillerSym = base => { const r = Math.random(); if (base && r < 0.06) return r < 0.03 ? S.SCATTER : S.JADE; return (Math.random() * 8) | 0; };
 function initReels(m) { Reels.cols = m.map(col => ({ strip: [fillerSym(true), ...col, fillerSym(true)], p: 1, st: 'idle', t: 0, dur: 0, speed: 0, start: 1, pop: [0, 0, 0], bt: 0 })); }
 function visible(c) { const s = Reels.cols[c].strip; return [s[1], s[2], s[3]]; }
 function reelSpin(final, o) {
@@ -1335,7 +1589,59 @@ function reelSpin(final, o) {
     });
   });
 }
+// ---------- Hold & Respin board: 9 independent cells (index c * 3 + r)
+function holdInit(m) {
+  Reels.hold = { hl: null, busy: false, onDone: null, onLand: null, cells: [...Array(9)].map((_, i) => {
+    const g = m[(i / 3) | 0][i % 3] === S.JADE;
+    return { st: g ? 'held' : 'empty', kind: g ? 'gong' : null, v: 0, merged: false, t: 0, dur: 0, res: null, pop: 0, flash: 0, hide: false, seed: Math.random() * 7 };
+  }) };
+}
+// Spin every empty cell; results maps cell index -> landed { kind, value, award }. Cells stop column by column.
+function holdSpin(results, onLand) {
+  return new Promise(res => {
+    const H = Reels.hold; H.onDone = res; H.onLand = onLand; H.busy = true; Reels.ts = 1;
+    let k = 0; const base = G.turbo ? 0.4 : 0.75, step = G.turbo ? 0.06 : 0.11;
+    H.cells.forEach((cell, i) => { if (cell.st !== 'empty') return; Object.assign(cell, { st: 'spin', t: 0, dur: base + (k++) * step, res: results[i] || null, pop: 0 }); });
+    if (!k) { H.busy = false; res(); }
+  });
+}
+function holdUpdate(dt) {
+  const H = Reels.hold; if (!H) return;
+  H.cells.forEach((cell, i) => {
+    cell.pop = Math.max(0, cell.pop - dt * 2.4); cell.flash = Math.max(0, cell.flash - dt * 1.2);
+    if (cell.st === 'spin') {
+      cell.t += dt * Reels.ts;
+      if (cell.t >= cell.dur) { const r = cell.res; if (r) Object.assign(cell, { st: 'held', kind: r.kind === 'gong' ? 'gong' : 'coin', v: r.value, merged: false, pop: 1 }); else cell.st = 'empty'; H.onLand && H.onLand(i, r); }
+    }
+  });
+  if (H.busy && !H.cells.some(c => c.st === 'spin')) { H.busy = false; const d = H.onDone; H.onDone = null; d && d(); }
+}
+function drawHold(c, now) {
+  const H = Reels.hold;
+  H.cells.forEach((cell, i) => {
+    const cc = (i / 3) | 0, r = i % 3, x = cc * PITCH, y = r * PITCH, cx = x + CELL / 2, cy = y + CELL / 2;
+    c.save(); rr(c, x, y, CELL, CELL, 12); c.fillStyle = 'rgba(6, 56, 38, .55)'; c.fill(); c.clip();
+    if (cell.st === 'empty' || cell.hide) { c.strokeStyle = 'rgba(140, 255, 200, .12)'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, CELL * 0.3, 0, 7); c.stroke(); }
+    else if (cell.st === 'spin') {
+      const off = cell.t * 9 + cell.seed, k = Math.floor(off), f = off - k;
+      for (let j = -1; j <= 0; j++) { const id = k - j, yy = y + (f + j) * CELL;
+        if (((id * 7919) % 5 + 5) % 5 < 2) c.drawImage(COIN.gold.blur, x + CELL * 0.1, yy + CELL * 0.1, CELL * 0.8, CELL * 0.8); }
+    }
+    c.restore();
+    if (cell.st === 'held' && !cell.hide) {
+      const sc = 1 + 0.18 * Math.sin(cell.pop * Math.PI) + (cell.flash > 0 ? 0.05 * Math.sin(now * 0.05) : 0);
+      if (cell.kind === 'gong') { const w = CELL * sc; c.drawImage(TEX[S.JADE].img, cx - w / 2, cy - w / 2, w, w); }
+      else drawCoinFace(c, cx, cy, CELL * 0.9 * sc, cell.v, coinTier(cell.v, cell.merged));
+    }
+  });
+  if (H.hl) {
+    const [a, b] = [H.hl.cells[0], H.hl.cells[2]], x0 = a[0] * PITCH, y0 = a[1] * PITCH, x1 = b[0] * PITCH + CELL, y1 = b[1] * PITCH + CELL;
+    c.save(); c.shadowColor = 'rgba(140, 255, 200, 1)'; c.shadowBlur = 26; c.lineWidth = 6; c.strokeStyle = `rgba(190, 255, 220, ${0.6 + 0.4 * Math.sin(now * 0.025)})`;
+    rr(c, x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4, 14); c.stroke(); c.restore();
+  }
+}
 function reelsUpdate(dt) {
+  if (Reels.hold) return holdUpdate(dt);
   Reels.cols.forEach((col, c) => {
     col.pop = col.pop.map(v => Math.max(0, v - dt * 2.5));
     if (col.st === 'spin') {
@@ -1352,6 +1658,7 @@ function reelsUpdate(dt) {
 }
 function drawReels(now) {
   const c = rctx; c.setTransform(RR, 0, 0, RR, 0, 0); c.clearRect(0, 0, RW, RW); c.drawImage(bgLayer, 0, 0, RW, RW);
+  if (Reels.hold) return drawHold(c, now);
   const pulse = 1 + 0.055 * Math.sin(now * 0.009);
   Reels.cols.forEach((col, ci) => {
     const x = ci * PITCH; c.save(); c.beginPath(); c.rect(x - 8, 0, CELL + 16, RW); c.clip();
@@ -1378,7 +1685,8 @@ function drawReels(now) {
   }
   if (Reels.antic) {
     const a = 0.55 + 0.45 * Math.sin(now * 0.02);
-    c.save(); c.shadowColor = 'rgba(255, 200, 80, 1)'; c.shadowBlur = 26; c.lineWidth = 6; c.strokeStyle = `rgba(255, 220, 120, ${a})`; rr(c, 2 * PITCH + 3, 3, CELL - 6, RW - 6, 14); c.stroke(); c.restore();
+    const gr = Reels.antic === 'green';
+    c.save(); c.shadowColor = gr ? 'rgba(110, 255, 180, 1)' : 'rgba(255, 200, 80, 1)'; c.shadowBlur = 26; c.lineWidth = 6; c.strokeStyle = gr ? `rgba(170, 255, 210, ${a})` : `rgba(255, 220, 120, ${a})`; rr(c, 2 * PITCH + 3, 3, CELL - 6, RW - 6, 14); c.stroke(); c.restore();
   }
   Reels.lines.forEach(L => {
     const pts = L.pts.map(([cc, r]) => [cc * PITCH + CELL / 2, r * PITCH + CELL / 2]);
@@ -1397,7 +1705,8 @@ let W = 540, H = 1160, SCALE = 1, FXK = 1;
 const parts = [];
 function stagePt(el, fx = 0.5, fy = 0.5) { let x = 0, y = 0, e = el; while (e && e !== gameEl) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return [x + el.offsetWidth * fx, y + el.offsetHeight * fy]; }
 function cellPt(c, r) { const [x, y] = stagePt(reelCv, 0, 0); return [x + c * PITCH + CELL / 2, y + r * PITCH + CELL / 2]; }
-function gongPt() { return stagePt($('gongWrap'), 0.5, 0.57); }
+function gongPt(colour = 'red') { return stagePt(gongEl(colour), 0.5, 0.57); }
+function coinFly(from, to, value, tier, dur, onArrive, size = CELL * 0.9, end = 1) { parts.push({ k: 'coinfly', x0: from[0], y0: from[1], x1: to[0], y1: to[1], t: 0, dur, value, tier, onArrive, size, end }); }
 function spark(x, y, col, spd = 120, life = 0.7, size = 3) { const a = Math.random() * 7, v = spd * (0.3 + Math.random()); parts.push({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life, max: life, col, size }); }
 function fly(from, to, col, dur, onArrive, kind) {
   const [x0, y0] = from, [x1, y1] = to; const cx = (x0 + x1) / 2 + (Math.random() - .5) * 160, cy = Math.min(y0, y1) - 60 - Math.random() * 60;
@@ -1450,7 +1759,14 @@ function fxFrame(dt) {
       if (p.t >= 1) { parts.splice(i, 1); p.onArrive && p.onArrive(); }
     }
     else if (p.k === 'ring') { p.l -= dt; const k = 1 - p.l / p.life; c.strokeStyle = p.col + (1 - k) * 0.8 + ')'; c.lineWidth = 6 * (1 - k) + 1; c.beginPath(); c.arc(p.x, p.y, p.max * k, 0, 7); c.stroke(); if (p.l <= 0) parts.splice(i, 1); }
-    else if (p.k === 'text') { p.life -= dt; const a = Math.min(1, p.life / p.max * 2); c.globalAlpha = a; c.font = '900 44px Cinzel, Georgia, serif'; c.textAlign = 'center'; c.lineWidth = 7; c.strokeStyle = '#4a0505'; const y = p.y - (1 - p.life / p.max) * 50; c.strokeText(p.text, p.x, y); c.fillStyle = '#fff1bd'; c.fillText(p.text, p.x, y); c.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
+    else if (p.k === 'text') { p.life -= dt; const a = Math.min(1, p.life / p.max * 2); c.globalAlpha = a; c.font = '900 44px Cinzel, Georgia, serif'; c.textAlign = 'center'; c.lineWidth = 7; c.strokeStyle = '#4a0505'; const y = p.y - (1 - p.life / p.max) * 50, hw = c.measureText(p.text).width / 2 + 10, x = clamp(p.x, hw, W - hw); c.strokeText(p.text, x, y); c.fillStyle = '#fff1bd'; c.fillText(p.text, x, y); c.globalAlpha = 1; if (p.life <= 0) parts.splice(i, 1); }
+    else if (p.k === 'coinfly') {
+      p.t += dt / p.dur; const t = Math.min(1, p.t), e = t * t * (3 - 2 * t);
+      const x = lerp(p.x0, p.x1, e), y = lerp(p.y0, p.y1, e) - Math.sin(t * Math.PI) * 40;
+      drawCoinFace(c, x, y, p.size * lerp(1, p.end, e) * (1 + 0.12 * Math.sin(t * Math.PI)), p.value, p.tier);
+      if (Math.random() < 0.5) spark(x, y, p.tier === 'jade' ? '#a0ffcc' : '#ffe48a', 50, 0.45, 2.5);
+      if (p.t >= 1) { parts.splice(i, 1); p.onArrive && p.onArrive(); }
+    }
     else if (p.k === 'coin') { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 320 * dt; p.rot += p.vr * dt; drawCoin(c, p); if (p.y > H + 40 || p.life <= 0) parts.splice(i, 1); }
   }
   if (dragonRun) {
@@ -1461,26 +1777,30 @@ function fxFrame(dt) {
 }
 
 // ======================================================= GONG / METER UI
-const gongCv = $('gongCv');
-function drawGongStand() {
-  const s = $('gongWrap').offsetWidth; if (!s) return; const k = 2;
-  gongCv.width = s * k; gongCv.height = s * k; const c = gongCv.getContext('2d'); c.scale(k, k);
-  const post = (x) => { const g = c.createLinearGradient(x - s * .03, 0, x + s * .03, 0); g.addColorStop(0, '#5a0810'); g.addColorStop(.5, '#c41e2a'); g.addColorStop(1, '#4a060c');
+const gongEl = colour => $(colour === 'green' ? 'gongGreen' : 'gongRed');
+function drawGongStand(colour) {
+  const gw = gongEl(colour), cv = gw.querySelector('.gongCv'), pal = GPAL[colour];
+  const s = gw.offsetWidth; if (!s) return; const k = 2;
+  cv.width = s * k; cv.height = s * k; const c = cv.getContext('2d'); c.scale(k, k);
+  const post = (x) => { const g = c.createLinearGradient(x - s * .03, 0, x + s * .03, 0); g.addColorStop(0, pal.post[0]); g.addColorStop(.5, pal.post[1]); g.addColorStop(1, pal.post[2]);
     c.fillStyle = g; c.fillRect(x - s * .028, s * .13, s * .056, s * .82); c.fillStyle = goldG(c, 0, s * .9, 0, s); rr(c, x - s * .045, s * .9, s * .09, s * .06, 4); c.fill(); };
   post(s * .07); post(s * .93);
-  c.save(); const bar = c.createLinearGradient(0, s * .06, 0, s * .14); bar.addColorStop(0, '#d8222e'); bar.addColorStop(1, '#6a0a12');
+  c.save(); const bar = c.createLinearGradient(0, s * .06, 0, s * .14); bar.addColorStop(0, pal.bar[0]); bar.addColorStop(1, pal.bar[1]);
   c.fillStyle = bar; c.beginPath(); c.moveTo(0, s * .05); c.quadraticCurveTo(s * .5, s * .1, s, s * .05); c.lineTo(s * .97, s * .14); c.quadraticCurveTo(s * .5, s * .16, s * .03, s * .14); c.closePath(); c.fill();
   c.strokeStyle = '#f2c14e'; c.lineWidth = 2; c.stroke();
-  c.fillStyle = '#f2c14e'; c.font = `${s * .065}px "Ma Shan Zheng", serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('鴻 運 當 頭', s * .5, s * .115);
+  c.fillStyle = '#f2c14e'; c.font = `${s * .065}px "Ma Shan Zheng", serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(pal.banner, s * .5, s * .115);
   c.restore();
   c.strokeStyle = '#d9a640'; c.lineWidth = s * .014; c.lineCap = 'round';
   c.beginPath(); c.moveTo(s * .38, s * .15); c.lineTo(s * .42, s * .23); c.moveTo(s * .62, s * .15); c.lineTo(s * .58, s * .23); c.stroke();
-  drawGongDisc(c, s * .5, s * .57, s * .36, true);
+  drawGongDisc(c, s * .5, s * .57, s * .36, true, pal);
 }
 function layoutGong() {
-  const top = $('top'), gw = $('gongWrap'); const s = Math.min(top.offsetWidth, top.offsetHeight);
-  gw.style.width = gw.style.height = s + 'px'; gw.style.setProperty('--gs', s + 'px'); drawGongStand();
+  const top = $('top'), cap = 22, gap = 10;
+  const s = Math.floor(Math.min((top.offsetWidth - gap) / 2, top.offsetHeight - cap - 4));
+  ['red', 'green'].forEach(col => { const gw = gongEl(col); gw.style.width = gw.style.height = s + 'px'; gw.style.setProperty('--gs', s + 'px'); drawGongStand(col); });
 }
+const setG2 = (colour, text) => { gongEl(colour).querySelector('.g2').textContent = text; };
+const setGongText = (colour, top, bottom) => { const g = gongEl(colour); g.querySelector('.g1').textContent = top; g.querySelector('.g2').textContent = bottom; };
 function buildMeter() {
   const m = $('meter'); m.innerHTML = '';
   for (let i = TIERS.length - 1; i >= 0; i--) {
@@ -1505,8 +1825,8 @@ function meterTarget(wilds) { const t = Math.min(TIERS.length - 1, tierOf(wilds)
 
 // ======================================================= GAME STATE / HUD
 const G = { st: null, betIdx: 3, denIdx: 0, phase: 'title', mode: 'base', auto: false, turbo: false, force: null, last: null,
-  shownCredit: 0, shownWin: 0, gongShown: 5, fsWilds: 0, fsWin: 0, fsLeft: 0 };
-const save = () => { try { localStorage.setItem('gof-v1', JSON.stringify({ credits: G.mode === 'base' ? G.st.balance : G.shownCredit, gong: G.mode === 'base' ? G.st.gong : 5, betIdx: G.betIdx, denIdx: G.denIdx, turbo: G.turbo, sound: SND.on, music: SND.musicOn, vol: SND.vol })); } catch (e) {} };
+  shownCredit: 0, shownWin: 0, gongShown: 5, jadeShown: 5, fsWilds: 0, fsWin: 0, fsLeft: 0, holdLeft: 0 };
+const save = () => { try { localStorage.setItem('gof-v1', JSON.stringify({ credits: G.mode === 'base' ? G.st.balance : G.shownCredit, gong: G.mode === 'base' ? G.st.gong : 5, jade: G.mode === 'base' ? G.st.jade : 5, betIdx: G.betIdx, denIdx: G.denIdx, turbo: G.turbo, sound: SND.on, music: SND.musicOn, vol: SND.vol })); } catch (e) {} };
 const load = () => { try { return JSON.parse(localStorage.getItem('gof-v1') || '{}') || {}; } catch (e) { return {}; } };
 function setInfo(html) { $('infoText').innerHTML = html; }
 function hud() {
@@ -1514,19 +1834,20 @@ function hud() {
   $('mCash').textContent = '$' + (G.shownCredit * DENOMS[G.denIdx]).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   $('mWin').textContent = fmt(G.shownWin);
   $('mBet').textContent = fmt(BETS[G.betIdx]);
-  $('mWinL').textContent = G.mode === 'fs' ? 'FEATURE WIN' : 'WIN';
-  $('mBetL').textContent = G.mode === 'fs' ? 'CURRENT BET' : 'BET';
+  $('mWinL').textContent = G.mode !== 'base' ? 'FEATURE WIN' : 'WIN';
+  $('mBetL').textContent = G.mode !== 'base' ? 'CURRENT BET' : 'BET';
   const d = DENOMS[G.denIdx]; $('bDenom').textContent = d < 1 ? Math.round(d * 100) + '¢' : '$' + d.toFixed(0);
   const idle = G.phase === 'idle' && G.mode === 'base';
   $('minus').disabled = !idle || G.betIdx === 0; $('plus').disabled = !idle || G.betIdx === BETS.length - 1; $('bDenom').disabled = !idle;
   const sb = $('spinBtn');
   if (G.mode === 'fs') { sb.textContent = 'FREE'; sb.classList.remove('stop'); sb.disabled = true; }
+  else if (G.mode === 'hold') { sb.textContent = 'HOLD'; sb.classList.remove('stop'); sb.disabled = true; }
   else if (G.phase === 'spinning') { sb.textContent = 'STOP'; sb.classList.add('stop'); sb.disabled = false; }
   else if (G.auto) { sb.textContent = 'STOP'; sb.classList.add('stop'); sb.disabled = false; }
   else { sb.textContent = 'SPIN'; sb.classList.remove('stop'); sb.disabled = G.phase !== 'idle'; }
   $('bAuto').classList.toggle('on', G.auto); $('bAuto').setAttribute('aria-pressed', G.auto);
   $('bTurbo').classList.toggle('on', G.turbo); $('bTurbo').setAttribute('aria-pressed', G.turbo);
-  $('gongCount').textContent = G.gongShown;
+  $('gongCount').textContent = G.gongShown; $('jadeCount').textContent = G.jadeShown;
   buildPaySide();
 }
 function buildPaySide() {
@@ -1545,7 +1866,8 @@ function countUp(from, to, dur, onStep) {
 // ======================================================= FLOW
 const tm = ms => G.turbo ? ms * 0.55 : ms;
 function spinOpts(res) {
-  const m = res.reel_matrix; const antic = G.mode === 'base' && m[0].includes(S.SCATTER) && m[1].includes(S.SCATTER);
+  const m = res.reel_matrix, sc = col => col.find(s => s === S.SCATTER || s === S.JADE);
+  const a0 = sc(m[0]), antic = G.mode === 'base' && a0 != null && a0 === sc(m[1]) ? (a0 === S.JADE ? 'green' : 'red') : false;
   return G.turbo ? { base: 0.42, delay: 0.1, speed: 26, antic, anticExtra: 1.3, fs: G.mode === 'fs' } : { base: 0.85, delay: 0.26, speed: 20, antic, anticExtra: 1.8, fs: G.mode === 'fs' };
 }
 async function doSpin() {
@@ -1561,11 +1883,12 @@ async function doSpin() {
   Reels.onLand = c => {
     SND.reelStop(c);
     const col = res.reel_matrix[c];
-    col.forEach((s, r) => { if (s === S.SCATTER || s === S.WILD) { Reels.cols[c].pop[r] = 1; } });
-    if (c === 2 && Reels.antic) { Reels.antic = false; $('reelFrame').classList.remove('antic'); SND.antic(false); }
-    if (col.includes(S.SCATTER)) SND.scatterLand(scN++);
+    col.forEach((s, r) => { if (s === S.SCATTER || s === S.JADE || s === S.WILD) { Reels.cols[c].pop[r] = 1; } });
+    if (c === 2 && Reels.antic) { Reels.antic = false; $('reelFrame').classList.remove('antic', 'green'); SND.antic(false); }
+    if (col.includes(S.SCATTER)) SND.scatterLand(scN++, 'red');
+    if (col.includes(S.JADE)) SND.scatterLand(scN++, 'green');
     if (isFS && col.includes(S.WILD)) SND.wildLand();
-    if (o.antic && c === 1) { Reels.antic = true; $('reelFrame').classList.add('antic'); SND.antic(true); setInfo('<b>ONE MORE GONG…</b>'); }
+    if (o.antic && c === 1) { Reels.antic = o.antic; $('reelFrame').classList.add('antic'); $('reelFrame').classList.toggle('green', o.antic === 'green'); SND.antic(true); setInfo(`<b>ONE MORE ${o.antic.toUpperCase()} GONG…</b>`); }
   };
   SND.spinStart(G.turbo);
   await reelSpin(res.reel_matrix, o);
@@ -1576,30 +1899,34 @@ async function doSpin() {
 async function resolveBase(res) {
   if (res.scatter_count > 0) await collectScatters(res);
   if (res.win_amount > 0) await showWins(res, false);
-  else if (!res.free_spins_trigger) setInfo(baseTip());
+  else if (!res.free_spins_trigger && !res.hold_trigger) setInfo(baseTip());
   if (res.free_spins_trigger) { await featureIntro(res); return runFS(); }
+  if (res.hold_trigger) { await holdIntro(res); return runHold(); }
   G.phase = 'idle'; hud(); save();
   if (G.auto) { await sleep(tm(450)); if (G.auto && G.phase === 'idle') trySpin(); }
 }
 let tipI = 0;
-const TIPS = ['3 GONGS TRIGGER FREE SPINS', 'EVERY GONG CAN ADD FREE SPINS', 'EVERY FREE SPINS FEATURE PAYS 10x BET OR MORE', 'PHOENIX WILDS CLIMB THE QUICK HIT METER', 'QUICK HIT MULTIPLIES THE FEATURE WIN UP TO 100x'];
+const TIPS = ['3 RED GONGS TRIGGER FREE SPINS', '3 GREEN GONGS TRIGGER HOLD & RESPIN', 'EVERY GONG CAN ADD SPINS TO ITS COLLECTOR', 'EVERY FEATURE PAYS 10x BET OR MORE', 'FULL ROWS AND COLUMNS MERGE IN HOLD & RESPIN', 'PHOENIX WILDS CLIMB THE QUICK HIT METER'];
 const baseTip = () => TIPS[(tipI++) % TIPS.length];
 function collectScatters(res) {
+  // each Scatter flies to the Gong of its colour; hits on the same Gong in one spin escalate
   return new Promise(async done => {
-    let n = 0; const total = res.scatter_positions.length; const gp = gongPt();
+    let n = 0; const list = res.scatters, total = list.length, per = { red: 0, green: 0 };
+    const trig = { red: res.free_spins_trigger, green: res.hold_trigger }, any = trig.red || trig.green;
     for (let i = 0; i < total; i++) {
-      const [c, r] = res.scatter_positions[i]; const inc = res.gong_state.increments[i];
-      SND.gongFly(tm(620) / 1000, c, i);
-      fly(cellPt(c, r), gp, 'gold', tm(620) / 1000, () => {
-        SND.gongCollect(n, { trigger: res.free_spins_trigger }); ring(gp[0], gp[1], 'rgba(255, 220, 130, ', 160 + n * 70, 0.8 + n * 0.2);
-        const gw = $('gongWrap'); gw.classList.remove('tap'); void gw.offsetWidth; gw.classList.add('tap');
-        for (let k = 0; k < 14 + n * 10; k++) spark(gp[0], gp[1], '#ffe48a', 160 + n * 50, 0.7, 3);
-        if (inc > 0) { G.gongShown += inc; floatText(gp[0], gp[1] - 60, '+' + inc); SND.gongAdd(inc); hud(); }
+      const { position: [c, r], colour, increment: inc } = list[i], gp = gongPt(colour), pal = GPAL[colour], idx = per[colour]++;
+      SND.gongFly(tm(620) / 1000, c, idx, colour);
+      fly(cellPt(c, r), gp, colour === 'green' ? 'jade' : 'gold', tm(620) / 1000, () => {
+        SND.gongCollect(idx, { trigger: trig[colour], colour }); ring(gp[0], gp[1], pal.fx, 160 + idx * 70, 0.8 + idx * 0.2);
+        const gw = gongEl(colour); gw.classList.remove('tap'); void gw.offsetWidth; gw.classList.add('tap');
+        for (let k = 0; k < 14 + idx * 10; k++) spark(gp[0], gp[1], pal.spark, 160 + idx * 50, 0.7, 3);
+        if (inc > 0) { if (colour === 'green') G.jadeShown += inc; else G.gongShown += inc; floatText(gp[0], gp[1] - 60, '+' + inc); SND.gongAdd(inc); hud(); }
         if (++n === total) setTimeout(done, tm(260));
       }, 'gong');
-      await sleep(tm(res.free_spins_trigger ? 440 : 360));
+      await sleep(tm(any ? 440 : 360));
     }
-    setInfo(res.free_spins_trigger ? '<b>3 GONGS!</b> FREE SPINS TRIGGERED' : `GONG COLLECTED · <b>${G.gongShown}</b> FREE SPINS STORED`);
+    setInfo(trig.red ? '<b>3 RED GONGS!</b> FREE SPINS TRIGGERED' : trig.green ? '<b>3 GREEN GONGS!</b> HOLD &amp; RESPIN TRIGGERED'
+      : `RED <b>${G.gongShown}</b> FREE SPINS · GREEN <b>${G.jadeShown}</b> RESPINS`);
   });
 }
 async function showWins(res, fs) {
@@ -1622,39 +1949,44 @@ function bigWin(amt) {
   $('bannerN').textContent = fmt(amt); b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
   coins(REDUCED ? 10 : 46);
 }
-function strike(snd = true) {
+function strike(snd = true, colour = 'red') {
   if (snd) SND.strike(); flash = 0.9;
   if (!REDUCED) { gameEl.classList.remove('shake'); void gameEl.offsetWidth; gameEl.classList.add('shake'); }
-  const gw = $('gongWrap'); gw.classList.remove('hit'); void gw.offsetWidth; gw.classList.add('hit');
+  const gw = gongEl(colour); gw.classList.remove('hit'); void gw.offsetWidth; gw.classList.add('hit');
+}
+// the triggering Gong comes forward, shows the spins it awards, and goes back
+async function gongForward(colour, count, label) {
+  const top = $('top'), gw = gongEl(colour), other = gongEl(colour === 'red' ? 'green' : 'red'), pal = GPAL[colour];
+  const [tx, ty] = stagePt(gw), dx = W / 2 - tx, dy = H * 0.42 - ty, sc = Math.min(W, H) * (W > H ? 0.68 : 0.86) / gw.offsetWidth;
+  $('dim').classList.add('on'); top.classList.add('forward'); other.classList.add('dimmed');
+  gw.querySelector('.gc').textContent = count; setGongText(colour, colour === 'red' ? 'FREE SPINS' : 'RESPINS', label);
+  const anim = gw.animate([{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${dx}px, ${dy}px) scale(${sc})` }], { duration: 700, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'forwards' });
+  await sleep(720); SND.award(colour); const fp = [W / 2, H * 0.42 + gw.offsetHeight * 0.07 * sc];
+  for (let i = 0; i < 30; i++) spark(fp[0], fp[1], pal.spark, 260, 1.2, 4);
+  ring(fp[0], fp[1], pal.fx, 380, 1.4);
+  await sleep(1900);
+  gw.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sc})` }, { transform: 'translate(0,0) scale(1)' }], { duration: 500, easing: 'ease-in', fill: 'forwards' });
+  anim.cancel(); await sleep(500); gw.getAnimations().forEach(a => a.cancel());
+  top.classList.remove('forward'); other.classList.remove('dimmed');
 }
 async function featureIntro(res) {
   G.phase = 'feature'; hud();
-  Reels.win = new Set(res.scatter_positions.map(([c, r]) => c * 3 + r)); SND.trigger(); await sleep(500);
-  const gp = gongPt(); strike(false); for (let i = 0; i < 4; i++) setTimeout(() => ring(gp[0], gp[1], 'rgba(255, 220, 130, ', 420, 1.2), i * 180);
+  Reels.win = new Set(res.scatters.filter(s => s.colour === 'red').map(({ position: [c, r] }) => c * 3 + r)); SND.trigger('red'); await sleep(500);
+  const gp = gongPt('red'); strike(false, 'red'); for (let i = 0; i < 4; i++) setTimeout(() => ring(gp[0], gp[1], GPAL.red.fx, 420, 1.2), i * 180);
   await sleep(900);
-  // Gong collector comes forward
-  const top = $('top'); const [tx, ty] = stagePt(top); const dx = W / 2 - tx, dy = H * 0.42 - ty; const sc = W > H ? 1.35 : 1.6;
-  $('dim').classList.add('on'); top.classList.add('forward');
-  $('gongCount').textContent = res.free_spins_awarded; document.querySelector('#gongText .g2').textContent = 'FREE SPINS AWARDED';
-  const anim = top.animate([{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${dx}px, ${dy}px) scale(${sc})` }], { duration: 700, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'forwards' });
-  await sleep(720); SND.award(); const fp = [W / 2, H * 0.42 + $('gongWrap').offsetHeight * 0.07 * sc];
-  for (let i = 0; i < 30; i++) spark(fp[0], fp[1], '#ffe48a', 260, 1.2, 4);
-  ring(fp[0], fp[1], 'rgba(255, 220, 130, ', 380, 1.4);
-  await sleep(1900);
-  top.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sc})` }, { transform: 'translate(0,0) scale(1)' }], { duration: 500, easing: 'ease-in', fill: 'forwards' });
-  anim.cancel(); await sleep(500); top.getAnimations().forEach(a => a.cancel());
-  top.classList.remove('forward'); document.querySelector('#gongText .g2').textContent = 'FREE SPINS';
+  await gongForward('red', res.free_spins_awarded, 'AWARDED');
+  setGongText('red', 'GONG', 'FREE SPINS');
   // golden dragon transition
   SND.swell(); SND.setMode('fs', 1.3);
   const swap = sleep(1100).then(() => enterFSVisuals(res));
   if (REDUCED) { await sleep(1200); } else { SND.dragon(2.4); await dragonFly(2.4); }
   await swap; flash = 0.6;
   $('dim').classList.remove('on');
-  await popup({ title: 'FREE SPINS', big: res.free_spins_awarded, sub: 'Every <b>Gong</b> that lands reveals <b>1 to 3 more Free Spins</b>. Every <b>Phoenix Wild</b> climbs the <b>Quick Hit</b> meter, and the total win is multiplied by the highest tier reached.', btn: 'CONTINUE' });
+  await popup({ title: 'FREE SPINS', big: res.free_spins_awarded, sub: 'Every <b>red Gong</b> that lands reveals <b>1 to 3 more Free Spins</b>. Every <b>Phoenix Wild</b> climbs the <b>Quick Hit</b> meter, and the total win is multiplied by the highest tier reached.', btn: 'CONTINUE' });
 }
 function enterFSVisuals(res) {
   G.mode = 'fs'; G.fsWilds = 0; G.fsWin = 0; G.fsLeft = res.free_spins_awarded; G.shownWin = 0;
-  stageEl.classList.add('fs'); $('gongWrap').hidden = true; $('meter').hidden = false; updateMeter(0);
+  stageEl.classList.add('fs'); $('gongs').hidden = true; $('meter').hidden = false; updateMeter(0);
   Reels.win = null; Reels.lines = [];
   setInfo(`SPINS LEFT · <b>${G.fsLeft}</b>`); hud();
 }
@@ -1714,16 +2046,149 @@ async function featureOutro(res) {
     await popup({ title: `QUICK HIT ${fc.multiplier}x`, big: fmt(fc.base_win), sub: `Free Spins win <b>${fmt(fc.base_win)}</b> × <b>${fc.multiplier}</b>${fc.capped ? ' (capped at 1,500x bet)' : ''}`, btn: 'COLLECT',
       onShow: async () => { await sleep(700); strike(); SND.coinBurst(18); coins(REDUCED ? 8 : 40); SND.roll(1.8, true); await countUp(fc.base_win, fc.total, 1.8, v => { $('pB').textContent = fmt(v); }); } });
   } else {
-    await popup({ title: 'FREE SPINS COMPLETE', big: fmt(fc.total), sub: fc.total > 0 ? 'Total Free Spins win. Collect 4 or more Phoenix Wilds next time for a Quick Hit multiplier.' : 'No win this time. The Gong is ready to collect again.', btn: 'COLLECT' });
+    await popup({ title: 'FREE SPINS COMPLETE', big: fmt(fc.total), sub: fc.total > 0 ? 'Total Free Spins win. Collect 4 or more Phoenix Wilds next time for a Quick Hit multiplier.' : 'No win this time. The red Gong is ready to collect again.', btn: 'COLLECT' });
   }
   G.shownWin = fc.total; G.shownCredit = res.balance - fc.total; hud();
   SND.swell(); SND.setMode('base', 1.3); flash = 0.8;
   await sleep(500);
-  G.mode = 'base'; stageEl.classList.remove('fs'); $('meter').hidden = true; $('gongWrap').hidden = false; G.gongShown = G.st.gong; layoutGong();
+  G.mode = 'base'; stageEl.classList.remove('fs'); $('meter').hidden = true; $('gongs').hidden = false; G.gongShown = G.st.gong; layoutGong();
   if (fc.total > 0) { SND.win(2); SND.roll(1.4); const c0 = G.shownCredit; await countUp(0, fc.total, 1.4, v => { G.shownCredit = c0 + v; $('mCredit').textContent = fmt(G.shownCredit); }); }
   G.shownCredit = G.st.balance; G.phase = 'idle'; setInfo(`FEATURE WIN · <b>${fmt(fc.total)}</b>`); hud(); save();
   if (G.auto) { await sleep(900); if (G.auto && G.phase === 'idle') trySpin(); }
 }
+// ======================================================= HOLD & RESPIN
+const cellIdx = ([c, r]) => c * 3 + r;
+async function holdIntro(res) {
+  G.phase = 'feature'; hud();
+  Reels.win = new Set(res.scatters.filter(s => s.colour === 'green').map(s => cellIdx(s.position))); SND.trigger('green'); await sleep(500);
+  const gp = gongPt('green'); strike(false, 'green'); for (let i = 0; i < 4; i++) setTimeout(() => ring(gp[0], gp[1], GPAL.green.fx, 420, 1.2), i * 180);
+  await sleep(900);
+  await gongForward('green', res.hold_awarded, 'AWARDED');
+  SND.swell(); SND.setMode('hr', 1.3);
+  const swap = sleep(1100).then(() => enterHoldVisuals(res));
+  if (REDUCED) { await sleep(1200); } else { SND.dragon(2.4); await dragonFly(2.4); }
+  await swap; flash = 0.6;
+  $('dim').classList.remove('on');
+  await popup({ title: 'HOLD & RESPIN', big: res.hold_awarded, sub: 'The green Gong gives <b>' + res.hold_awarded + ' respins</b>, and coins landing never reset them. A <b>green Gong</b> that lands adds <b>1 to 3 more</b>. Fill a <b>row or column</b> and its 3 coins merge into one.', btn: 'START' });
+  await revealStart(res.hold_start);
+}
+function enterHoldVisuals(res) {
+  G.mode = 'hold'; G.holdLeft = res.hold_awarded; G.jadeShown = G.holdLeft; G.shownWin = 0;
+  stageEl.classList.add('hr'); holdInit(res.reel_matrix); Reels.win = null; Reels.lines = [];
+  gongEl('green').classList.add('live'); gongEl('red').classList.add('dimmed'); setGongText('green', 'RESPINS', 'LEFT');
+  setInfo(`HOLD &amp; RESPIN · RESPINS LEFT <b>${G.holdLeft}</b>`); hud();
+}
+function updateHoldWin() { G.shownWin = Reels.hold.cells.reduce((a, c) => a + (c.st === 'held' && c.kind === 'coin' ? c.v : 0), 0); hud(); }
+// the 3 green Gongs that triggered the feature turn into coins
+async function revealStart(hs) {
+  for (let k = 0; k < hs.coins.length; k++) {
+    const co = hs.coins[k], cell = Reels.hold.cells[cellIdx(co.position)], p = cellPt(...co.position);
+    Object.assign(cell, { st: 'held', kind: 'coin', v: co.value, pop: 1 }); SND.coinLand(k, true);
+    ring(p[0], p[1], GPAL.green.fx, 120, 0.6); for (let j = 0; j < 16; j++) spark(p[0], p[1], '#ffe48a', 150, 0.6, 3);
+    updateHoldWin(); await sleep(tm(320));
+  }
+  for (let k = 0; k < hs.merges.length; k++) await animMerge(hs.merges[k], k);
+}
+async function runHold() {
+  G.phase = 'idle'; hud(); await sleep(tm(500));
+  for (;;) {
+    G.phase = 'spinning';
+    const res = serverSpin(G.st, Math.random, {}); G.last = res; const sp = res.hold_spin;
+    G.holdLeft -= 1; G.jadeShown = G.holdLeft; hud();
+    setInfo(`RESPIN ${sp.respin} · RESPINS LEFT <b>${G.holdLeft}</b>`);
+    const gw = gongEl('green'); gw.classList.remove('tap'); void gw.offsetWidth; gw.classList.add('tap');
+    SND.hrSpin();
+    const results = {}; sp.lands.forEach(l => { results[cellIdx(l.position)] = l; });
+    let landN = 0;
+    await holdSpin(results, (i, r) => {
+      if (!r) { SND.cellStop(true); return; }
+      const p = cellPt((i / 3) | 0, i % 3);
+      if (r.kind === 'gong') { SND.scatterLand(1, 'green'); ring(p[0], p[1], GPAL.green.fx, 150, 0.7); }
+      else { SND.coinLand(landN++); for (let j = 0; j < 12; j++) spark(p[0], p[1], '#ffe48a', 130, 0.5, 3); updateHoldWin(); }
+    });
+    G.phase = 'resolving'; hud();
+    const g = sp.lands.find(l => l.kind === 'gong');
+    if (g) await revealHoldSpins(g);
+    for (let k = 0; k < sp.merges.length; k++) await animMerge(sp.merges[k], k);
+    updateHoldWin();
+    if (res.hold_complete) return holdOutro(res);
+    setInfo(`RESPINS LEFT <b>${G.holdLeft}</b> · BOARD <b>${fmt(G.shownWin)}</b>`);
+    await sleep(tm(sp.lands.length || sp.merges.length ? 380 : 560));
+  }
+}
+// a green Gong lands during the feature: it reveals extra respins for the green Gong, then becomes a coin
+function revealHoldSpins(g) {
+  return new Promise(async done => {
+    const i = cellIdx(g.position), cell = Reels.hold.cells[i], p = cellPt(...g.position), gp = gongPt('green'), n = g.award;
+    cell.pop = 1; SND.fsRetrigger(n);
+    ring(p[0], p[1], GPAL.green.fx, 210, 1); for (let k = 0; k < 26; k++) spark(p[0], p[1], '#a0ffcc', 210, 0.9, 3.5);
+    floatText(p[0], p[1] - 78, `+${n} RESPIN${n > 1 ? 'S' : ''}`); setInfo(`GREEN GONG REVEALS <b>+${n} RESPIN${n > 1 ? 'S' : ''}</b>`);
+    await sleep(tm(650));
+    fly(p, gp, 'jade', tm(560) / 1000, async () => {
+      G.holdLeft += n; G.jadeShown = G.holdLeft; SND.gongAdd(n); hud();
+      const gw = gongEl('green'); gw.classList.remove('tap'); void gw.offsetWidth; gw.classList.add('tap');
+      ring(gp[0], gp[1], GPAL.green.fx, 170, 0.8); for (let k = 0; k < 18; k++) spark(gp[0], gp[1], '#a0ffcc', 170, 0.7, 3);
+      setInfo(`<b>+${n} RESPIN${n > 1 ? 'S' : ''}</b> · RESPINS LEFT <b>${G.holdLeft}</b>`);
+      await sleep(tm(380));
+      Object.assign(cell, { kind: 'coin', v: g.value, pop: 1 }); SND.coinLand(3, true); updateHoldWin();
+      setTimeout(done, tm(380));
+    }, 'gong');
+  });
+}
+// a full row or column: its 3 coins fly together and become one coin on a random cell of that line
+async function animMerge(m, k) {
+  const Hd = Reels.hold, idx = m.cells.map(cellIdx), ti = cellIdx(m.target), tp = cellPt(...m.target);
+  Hd.hl = { cells: m.cells }; idx.forEach(i => { Hd.cells[i].flash = 1; });
+  setInfo(`${m.type === 'row' ? 'ROW' : 'COLUMN'} FILLED · <b>COINS MERGE</b>`); SND.mergeCharge();
+  await sleep(tm(560));
+  await new Promise(done => {
+    let n = 0;
+    idx.forEach(i => {
+      const cell = Hd.cells[i], from = cellPt((i / 3) | 0, i % 3), v = cell.v, tier = coinTier(v, cell.merged);
+      Object.assign(cell, { st: 'empty', kind: null, v: 0, merged: false });
+      coinFly(from, tp, v, tier, tm(440) / 1000, () => { if (++n === 3) done(); });
+    });
+  });
+  Hd.hl = null;
+  Object.assign(Hd.cells[ti], { st: 'held', kind: 'coin', v: m.value, merged: true, pop: 1, flash: 0.6 });
+  SND.merge(k); flash = 0.35;
+  ring(tp[0], tp[1], GPAL.green.fx, 260, 1.1); ring(tp[0], tp[1], 'rgba(255, 220, 130, ', 180, 0.8);
+  for (let j = 0; j < 40; j++) spark(tp[0], tp[1], j % 2 ? '#a0ffcc' : '#ffe48a', 260, 1, 3.5);
+  floatText(tp[0], tp[1] - 82, fmtShort(m.value)); updateHoldWin();
+  setInfo(`MERGED COIN · <b>${fmt(m.value)}</b>`);
+  await sleep(tm(760));
+}
+async function holdOutro(res) {
+  const hc = res.hold_complete; G.phase = 'feature'; hud();
+  setInfo('RESPINS COMPLETE · <b>COLLECTING COINS</b>'); gongEl('green').classList.remove('live'); await sleep(tm(700));
+  const Hd = Reels.hold, order = Hd.cells.map((c, i) => i).filter(i => Hd.cells[i].st === 'held' && Hd.cells[i].v > 0);
+  const wp = stagePt($('mWin')); let sum = 0;
+  await new Promise(async done => {
+    let n = 0; if (!order.length) return done();
+    for (let k = 0; k < order.length; k++) {
+      const cell = Hd.cells[order[k]], v = cell.v, tier = coinTier(v, cell.merged), from = cellPt((order[k] / 3) | 0, order[k] % 3);
+      Object.assign(cell, { st: 'empty', kind: null, v: 0, merged: false });
+      coinFly(from, wp, v, tier, tm(520) / 1000, () => {
+        sum += v; G.shownWin = sum; hud(); SND.hrCollect(n); for (let j = 0; j < 10; j++) spark(wp[0], wp[1], '#ffe48a', 120, 0.5, 3);
+        if (++n === order.length) setTimeout(done, tm(300));
+      }, CELL * 0.9, 0.35);
+      await sleep(tm(230));
+    }
+  });
+  G.shownWin = hc.total; hud();
+  await popup({ title: 'HOLD & RESPIN WIN', big: fmt(hc.total), sub: `<b>${hc.coins} coin${hc.coins > 1 ? 's' : ''}</b> on the board after <b>${hc.spins_played} respins</b>.`, btn: 'COLLECT',
+    onShow: async () => { SND.coinBurst(18); coins(REDUCED ? 8 : 40); SND.roll(1.2, true); await sleep(1200); } });
+  G.shownCredit = res.balance - hc.total; hud();
+  SND.swell(); SND.setMode('base', 1.3); flash = 0.8;
+  await sleep(500);
+  G.mode = 'base'; stageEl.classList.remove('hr'); Reels.hold = null; G.holdLeft = 0;
+  const m = []; for (let c = 0; c < 3; c++) m.push([0, 1, 2].map(() => (Math.random() * 7) | 0)); initReels(m);
+  gongEl('red').classList.remove('dimmed'); setGongText('green', 'GONG', 'RESPINS'); G.jadeShown = G.st.jade; layoutGong();
+  if (hc.total > 0) { SND.win(2); SND.roll(1.4); const c0 = G.shownCredit; await countUp(0, hc.total, 1.4, v => { G.shownCredit = c0 + v; $('mCredit').textContent = fmt(G.shownCredit); }); }
+  G.shownCredit = G.st.balance; G.phase = 'idle'; setInfo(`FEATURE WIN · <b>${fmt(hc.total)}</b>`); hud(); save();
+  if (G.auto) { await sleep(900); if (G.auto && G.phase === 'idle') trySpin(); }
+}
+
 let popRes = null, popTimer = null;
 function popup({ title, big, sub, btn, onShow }) {
   return new Promise(res => {
@@ -1751,17 +2216,19 @@ function openPanel(kind) {
   if (kind === 'info') {
     const bet = BETS[G.betIdx];
     body.innerHTML = `<h3>PAYTABLE · BET ${fmt(bet)}</h3><div class="ptGrid">${[7, 6, 5, 4, 3, 2, 1, 0].map(s => `<div class="ptCell"><img alt="" src="${TEX[s].url}"><div><span>${NAMES[s]}</span><b>${fmt(PAYS[s] * bet / 5)}</b></div></div>`).join('')}
-      <div class="ptCell"><img alt="" src="${TEX[S.SCATTER].url}"><div><span>GONG SCATTER</span><b>Collect</b></div></div></div>
-      <p class="note" style="margin-top:8px">3 of a kind on a payline, left to right. Phoenix Wild substitutes for every symbol except the Gong Scatter.</p>
+      <div class="ptCell"><img alt="" src="${TEX[S.SCATTER].url}"><div><span>RED GONG</span><b>Free Spins</b></div></div>
+      <div class="ptCell"><img alt="" src="${TEX[S.JADE].url}"><div><span>GREEN GONG</span><b>Hold &amp; Respin</b></div></div></div>
+      <p class="note" style="margin-top:8px">3 of a kind on a payline, left to right. Phoenix Wild substitutes for every symbol except the Gong Scatters.</p>
       <h3>5 FIXED PAYLINES</h3><div class="lines">${LINES.map((ln, i) => `<div class="mini"><em>${i + 1}</em>${[0, 1, 2].map(r => [0, 1, 2].map(c => `<i class="${ln[c] === r ? 'on' : ''}"></i>`).join('')).join('')}</div>`).join('')}</div>
-      <h3>GONG COLLECTOR</h3><p>Every Gong Scatter that lands in the base game is collected into the Gong above the reels and can add Free Spins to the stored total. The Gong always holds at least 5 and up to 19 Free Spins, and keeps its count between spins.</p>
-      <p>3 Gongs in one spin award every Free Spin stored in the Gong. The Gong then resets to 5.</p>
-      <h3>FREE SPINS · EXTRA SPINS</h3><p>During Free Spins every Gong that lands reveals 1, 2 or 3 extra Free Spins, added straight to the spin counter, and every feature reveals at least one. Every Free Spins feature pays at least 10 × bet, and longer features pay more:</p>
-      <table class="tiers">${FS_PLANS.map(p => `<tr><td>${p.spins[0]}–${p.spins[1]} Free Spins</td><td>${p.prize[0]}–${p.prize[1]} × bet</td></tr>`).join('')}</table>
+      <h3>TWO GONG COLLECTORS</h3><p>Every Gong Scatter that lands in the base game flies to the Gong of its colour and can add spins to it: red Gongs fill the red collector with Free Spins, green Gongs fill the green collector with respins. Each collector holds 5 to 19 spins and keeps its count between spins.</p>
+      <p>3 Gongs of one colour in one spin trigger that collector's feature with every spin it holds. That collector then resets to 5.</p>
+      <h3>FREE SPINS · EXTRA SPINS</h3><p>During Free Spins every Gong that lands reveals 1, 2 or 3 extra Free Spins, added straight to the spin counter, and every feature reveals at least one. Every feature pays at least 10 × bet, and longer features pay more:</p>
+      <table class="tiers">${FS_PLANS.map(p => `<tr><td>${p.spins[0]}–${p.spins[1]} spins</td><td>${p.prize[0]}–${p.prize[1]} × bet</td></tr>`).join('')}</table>
+      <h3>HOLD &amp; RESPIN</h3><p>The 3 green Gongs become coins. The green Gong's stored spins play out one by one: coins that land stay on the board, and unlike a classic hold and spin the count never resets. A green Gong that lands reveals 1, 2 or 3 extra respins (at least once per feature), then becomes a coin. When a row or column holds 3 coins, they merge into one coin worth their total, placed on a random cell of that line. When the respins run out, every coin on the board is paid. It uses the same spin and prize bands as Free Spins.</p>
       <h3>QUICK HIT</h3><p>During Free Spins each Phoenix Wild is collected into the Quick Hit meter, which keeps its progress for the whole feature. When the Free Spins end, the total Free Spins win is multiplied by the highest tier reached.</p>
       <table class="tiers">${TIERS.map(t => `<tr><td>${t.wilds} Wilds</td><td>${t.mult}x</td></tr>`).join('')}</table>
       <h3>GAME FACTS</h3><p>3×3 reels · 5 paylines · max win 1,500 × bet · mid–high volatility.</p>
-      <p class="note">Demo script: outcomes are scripted in the browser, the way a demo server would serve them. Every 10 base spins hold 6 non-winning spins, 3 symbol wins and 1 Free Spins trigger, in a shuffled order, and Gongs land on 6 of those 10 spins. Each feature is planned when it triggers, including its length, extra spins and prize. This is a showcase script, not a real-money math model, so it pays far more than it takes.</p>`;
+      <p class="note">Demo script: outcomes are scripted in the browser, the way a demo server would serve them. Every 10 base spins hold 6 non-winning spins, 3 symbol wins and 1 feature trigger, in a shuffled order, and Gongs land on 6 of those 10 spins. The trigger alternates between Free Spins and Hold &amp; Respin from one block of 10 to the next. Each feature is planned when it triggers, including its length, extra spins and prize. This is a showcase script, not a real-money math model, so it pays far more than it takes.</p>`;
   } else {
     body.innerHTML = `<div class="menuList">
       <button id="mSound" class="${SND.on ? 'on' : ''}">Sound effects <span class="st">${SND.on ? 'ON' : 'OFF'}</span></button>
@@ -1769,8 +2236,10 @@ function openPanel(kind) {
       <label class="volRow">Volume <input id="mVol" type="range" min="0" max="100" step="1" value="${Math.round(SND.vol * 100)}" aria-label="Master volume"><span class="st" id="mVolV">${Math.round(SND.vol * 100)}%</span></label></div>
       <h3>DEMO TOOLS</h3><div class="menuList">
       <button id="mForceFS">Next spin: trigger Free Spins <span class="st">${G.force === 'fs' ? 'ARMED' : ''}</span></button>
+      <button id="mForceHR">Next spin: trigger Hold &amp; Respin <span class="st">${G.force === 'hr' ? 'ARMED' : ''}</span></button>
       <button id="mTease">Next spin: 2 Gongs (anticipation) <span class="st">${G.force === 'tease' ? 'ARMED' : ''}</span></button>
-      <button id="mGong">Add 5 spins to the Gong <span class="st">${G.st.gong}</span></button>
+      <button id="mGong">Add 5 spins to the red Gong <span class="st">${G.st.gong}</span></button>
+      <button id="mJade">Add 5 spins to the green Gong <span class="st">${G.st.jade}</span></button>
       <button id="mCredits">Add 10,000 credits <span class="st"></span></button></div>
       <h3>LAST SERVER RESPONSE</h3><pre id="resp">${G.last ? JSON.stringify(G.last, (k, v) => k === 'reel_matrix' ? v.map(col => col.map(s => NAMES[s])) : v, 2) : 'Spin once to see the response.'}</pre>`;
     const bind = (id, fn) => $(id).addEventListener('click', () => { fn(); save(); hud(); openPanel('menu'); });
@@ -1778,6 +2247,8 @@ function openPanel(kind) {
     $('mVol').addEventListener('change', () => { save(); SND.click(); });
     bind('mSound', () => SND.setOn(!SND.on)); bind('mMusic', () => SND.setMusic(!SND.musicOn));
     bind('mForceFS', () => { G.force = G.force === 'fs' ? null : 'fs'; });
+    bind('mForceHR', () => { G.force = G.force === 'hr' ? null : 'hr'; });
+    bind('mJade', () => { if (G.mode !== 'base') return; G.st.jade = Math.min(19, G.st.jade + 5); G.jadeShown = G.st.jade; });
     bind('mTease', () => { G.force = G.force === 'tease' ? null : 'tease'; });
     bind('mGong', () => { if (G.mode !== 'base') return; G.st.gong = Math.min(19, G.st.gong + 5); G.gongShown = G.st.gong; });
     bind('mCredits', () => { G.st.balance += 10000; if (G.mode === 'base' && G.phase === 'idle') G.shownCredit = G.st.balance; });
@@ -1832,19 +2303,19 @@ async function boot(data) {
   await Promise.race([fontLoad, sleep(2500)]).catch(() => {});
   const saved = Object.assign(load(), data || {});
   G.st = makeState(Number.isFinite(saved.credits) && saved.credits > 0 ? saved.credits : 15000, 0);
-  G.st.mode = 'script'; G.st.gong = clamp(saved.gong | 0 || 5, 5, 19);
+  G.st.mode = 'script'; G.st.gong = clamp(saved.gong | 0 || 5, 5, 19); G.st.jade = clamp(saved.jade | 0 || 5, 5, 19);
   G.betIdx = Number.isInteger(saved.betIdx) ? clamp(saved.betIdx, 0, BETS.length - 1) : 3;
   G.denIdx = Number.isInteger(saved.denIdx) ? clamp(saved.denIdx, 0, DENOMS.length - 1) : 0;
   G.turbo = !!saved.turbo; if (saved.sound === false) SND.on = false; if (saved.music === false) SND.musicOn = false; if (Number.isFinite(saved.vol)) SND.vol = clamp(saved.vol, 0, 1);
-  G.shownCredit = G.st.balance; G.gongShown = G.st.gong;
-  buildTextures(); buildReelBg(); buildMeter();
+  G.shownCredit = G.st.balance; G.gongShown = G.st.gong; G.jadeShown = G.st.jade;
+  buildTextures(); buildCoins(); buildReelBg(); buildMeter();
   const m = []; for (let c = 0; c < 3; c++) m.push([0, 1, 2].map(() => (Math.random() * 7) | 0));
   m[0][1] = S.DRAGON; m[1][0] = S.LANTERN; m[2][2] = S.WILD;
   initReels(m);
   layout(); addEventListener('resize', layout);
   Object.defineProperty(G.st, 'bet', { get: () => BETS[G.betIdx] });
   hud(); requestAnimationFrame(loop);
-  try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => ({ credits: G.mode === 'base' ? G.st.balance : G.shownCredit, gong: G.st.gong, betIdx: G.betIdx, denIdx: G.denIdx, turbo: G.turbo })); } catch (e) {}
+  try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => ({ credits: G.mode === 'base' ? G.st.balance : G.shownCredit, gong: G.st.gong, jade: G.st.jade, betIdx: G.betIdx, denIdx: G.denIdx, turbo: G.turbo })); } catch (e) {}
   const start = () => {
     if (G.phase !== 'title') return;
     SND.init(); SND.intro(); SND.setMode('base', 1.4); $('title').classList.add('out'); setTimeout(() => { $('title').hidden = true; }, 650);
