@@ -323,3 +323,4 @@ a.ship{transition:border-color .2s,transform .2s}a.ship:hover{border-color:var(-
 .phone[data-rotate] .cap.fade{opacity:0}
 .page-title h1.one-line{font-size:clamp(24px,3.6vw,42px)}
 .page-title h1.one-line em.hl{font-style:normal;color:var(--gold,#d4a84b)}
+.page-title h1.one-line .hl{font-style:normal}
