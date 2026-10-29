@@ -290,3 +290,6 @@ a.ship{transition:border-color .2s,transform .2s}a.ship:hover{border-color:var(-
 .shots.pack figure{break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 16px}
 @media (max-width:860px){.shots.pack.c3,.shots.pack.c4{column-count:2}}
 @media (max-width:520px){.shots.pack{column-count:1!important}}
+.subhead{font:400 26px/1.2 var(--serif,Georgia,serif);color:var(--text,#f3efe2);margin:40px 0 8px;display:flex;align-items:center;gap:16px}
+.subhead::after{content:"";flex:1;height:1px;background:var(--line)}
+.group-note{color:var(--text-dim,#aeb8c8);max-width:70ch;margin:0 0 24px}
