@@ -324,3 +324,53 @@ a.ship{transition:border-color .2s,transform .2s}a.ship:hover{border-color:var(-
 .page-title h1.one-line{font-size:clamp(24px,3.6vw,42px)}
 .page-title h1.one-line em.hl{font-style:normal;color:var(--gold,#d4a84b)}
 .page-title h1.one-line .hl{font-style:normal}
+.card .shot video.cv{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .5s;pointer-events:none}
+.card .shot.live video.cv{opacity:1}
+.card .shot.live img{filter:blur(18px) brightness(.7);transform:scale(1.25)}
+.card:hover .shot.live img{transform:scale(1.25)}
+.card .shot .badge{z-index:2}
+@media (prefers-reduced-motion:reduce){.card .shot video.cv{display:none}}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1px solid var(--line,#2a2d36);border-radius:999px;padding:8px 16px;font-size:14px;color:var(--text,#e9e6df);background:rgba(200,163,94,.06)}
+.about-top{grid-template-columns:1fr 230px;gap:48px;align-items:center}
+.about-top .portrait{position:static}
+.about-top .portrait img{aspect-ratio:1/1;object-fit:cover;object-position:50% 18%}
+.about-top .prose p{font-size:18px;line-height:1.65}
+@media (max-width:860px){.about-top{grid-template-columns:1fr;gap:24px;align-items:start}.about-top .portrait{max-width:200px}}
+.intro-split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.intro-l .portrait{position:static;max-width:none}
+.intro-l .portrait img{aspect-ratio:16/10;object-fit:cover;object-position:50% 20%;width:100%}
+.intro-l .prose{margin-top:20px}
+.intro-l .prose p{font-size:17px;line-height:1.65;margin:0 0 18px}
+.intro-r .profile-grid{grid-template-columns:1fr}
+@media (max-width:860px){.intro-split{grid-template-columns:1fr;gap:32px}}
+.intro-l .portrait img{aspect-ratio:4/3;object-position:50% 10%}
+.intro-r .pf{padding-top:13px;padding-bottom:13px}
+.intro-r .pf .pv{font-size:18px}
+.intro-split{align-items:stretch}
+.intro-l{display:flex;flex-direction:column}
+.intro-l .portrait{flex:1 1 auto;min-height:280px;position:relative}
+.intro-l .portrait img{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:50% 12%}
+@media (max-width:860px){.intro-l .portrait{flex:none;min-height:0;position:static}.intro-l .portrait img{position:static;height:auto;aspect-ratio:4/3}}
+.intro-l .portrait{top:0}
+.intro-l .portrait img{object-position:50% 34%}
+.intro-l .portrait img{object-position:50% 24%}
+.intro-text{max-width:760px;margin:0 0 28px}
+.intro-text p{font-size:18px;line-height:1.65;margin:0 0 20px}
+.intro-l .portrait{min-height:0}
+.intro-l .portrait img{object-position:50% 20%}
+@media (max-width:860px){.intro-text{margin-bottom:22px}.intro-l .portrait img{aspect-ratio:4/3}}
+/* intro panel: photo left, text + profile table right */
+.intro-panel{display:grid;grid-template-columns:340px 1fr;gap:40px;align-items:stretch}
+.intro-panel .portrait{position:relative;top:0;max-width:none;min-height:0}
+.intro-panel .portrait img{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:50% 20%}
+.intro-body{display:flex;flex-direction:column;gap:26px;justify-content:center}
+.intro-body .prose p{font-size:18px;line-height:1.65;margin:0 0 20px;max-width:none}
+.intro-body .profile-grid{grid-template-columns:1fr 1fr}
+@media (max-width:860px){.intro-panel{grid-template-columns:1fr;gap:24px}.intro-panel .portrait{position:static;max-width:260px}.intro-panel .portrait img{position:static;height:auto;aspect-ratio:3/4}}
+@media (max-width:520px){.intro-body .profile-grid{grid-template-columns:1fr}}
+.intro-body .pf{padding:14px 22px}
+.intro-body .pf .pv{font-size:18px;line-height:1.3}
+.intro-panel{grid-template-columns:408px 1fr}@media (max-width:860px){.intro-panel{grid-template-columns:1fr}}
+.intro-panel{grid-template-columns:449px 1fr}@media (max-width:860px){.intro-panel{grid-template-columns:1fr}}
+.intro-panel{grid-template-columns:1fr 449px}.intro-panel .portrait{order:2}@media (max-width:860px){.intro-panel{grid-template-columns:1fr}.intro-panel .portrait{order:0}}

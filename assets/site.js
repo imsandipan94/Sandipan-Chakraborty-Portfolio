@@ -78,3 +78,17 @@
     } else { playFrom(vids[0]); run(); }
   });
 })();
+/* card previews: play muted gameplay loop while the card is on screen */
+(function(){
+  var vs=[].slice.call(document.querySelectorAll('.card .shot video.cv'));
+  if(!vs.length||!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){
+    var v=en.target,shot=v.parentNode;
+    if(en.isIntersecting){
+      if(!v.src){v.src=v.getAttribute('data-src');}
+      var pr=v.play();
+      if(pr&&pr.then)pr.then(function(){shot.classList.add('live');}).catch(function(){});
+    }else{v.pause();}
+  });},{threshold:0.6});
+  vs.forEach(function(v){io.observe(v);});
+})();
