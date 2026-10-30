@@ -78,17 +78,29 @@
     } else { playFrom(vids[0]); run(); }
   });
 })();
-/* card previews: play muted gameplay loop while the card is on screen */
+/* card previews: desktop plays on hover; touch devices play while the card is on screen */
 (function(){
-  var vs=[].slice.call(document.querySelectorAll('.card .shot video.cv'));
-  if(!vs.length||!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  var io=new IntersectionObserver(function(es){es.forEach(function(en){
-    var v=en.target,shot=v.parentNode;
-    if(en.isIntersecting){
-      if(!v.src){v.src=v.getAttribute('data-src');}
-      var pr=v.play();
-      if(pr&&pr.then)pr.then(function(){shot.classList.add('live');}).catch(function(){});
-    }else{v.pause();}
-  });},{threshold:0.6});
-  vs.forEach(function(v){io.observe(v);});
+  var vs=[].slice.call(document.querySelectorAll('.card .shot video.cv, .ship .im video.cv'));
+  if(!vs.length||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var hoverable=matchMedia('(hover: hover) and (pointer: fine)').matches;
+  function start(v){
+    if(!v.src){v.src=v.getAttribute('data-src');}
+    var pr=v.play();
+    if(pr&&pr.then)pr.then(function(){v.parentNode.classList.add('live');}).catch(function(){});
+  }
+  function stop(v){v.pause();v.parentNode.classList.remove('live');try{v.currentTime=0;}catch(e){}}
+  if(hoverable){
+    vs.forEach(function(v){
+      var card=v.closest('a')||v.parentNode;
+      card.addEventListener('mouseenter',function(){start(v);});
+      card.addEventListener('mouseleave',function(){stop(v);});
+      card.addEventListener('focusin',function(){start(v);});
+      card.addEventListener('focusout',function(){stop(v);});
+    });
+  }else if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(en){
+      if(en.isIntersecting)start(en.target);else en.target.pause();
+    });},{threshold:0.6});
+    vs.forEach(function(v){io.observe(v);});
+  }
 })();

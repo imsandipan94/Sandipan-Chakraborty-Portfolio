@@ -374,3 +374,7 @@ a.ship{transition:border-color .2s,transform .2s}a.ship:hover{border-color:var(-
 .intro-panel{grid-template-columns:408px 1fr}@media (max-width:860px){.intro-panel{grid-template-columns:1fr}}
 .intro-panel{grid-template-columns:449px 1fr}@media (max-width:860px){.intro-panel{grid-template-columns:1fr}}
 .intro-panel{grid-template-columns:1fr 449px}.intro-panel .portrait{order:2}@media (max-width:860px){.intro-panel{grid-template-columns:1fr}.intro-panel .portrait{order:0}}
+.ship .im{position:relative}
+.ship .im video.cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;pointer-events:none}
+.ship .im.live video.cv{opacity:1}
+@media (prefers-reduced-motion:reduce){.ship .im video.cv{display:none}}
